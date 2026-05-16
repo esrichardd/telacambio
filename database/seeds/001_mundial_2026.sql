@@ -14,7 +14,7 @@ values (
   'Panini FIFA World Cup 2026',
   'mundial-2026',
   'Álbum oficial Panini del FIFA World Cup 2026, celebrado en Estados Unidos, México y Canadá. El álbum más grande de la historia con 48 selecciones participantes.',
-  670,   -- número estimado, actualizar con el oficial
+  993,   -- total oficial Panini FIFA World Cup 2026: 19 FWC + 960 selecciones (48×20) + 14 CC
   true
 );
 

@@ -2,14 +2,13 @@
 
 import { useState, FormEvent } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import AuthCard from "@/components/auth/AuthCard";
 import AuthInput from "@/components/auth/AuthInput";
 import AuthButton from "@/components/auth/AuthButton";
 import AuthAlert from "@/components/auth/AuthAlert";
 
-// Traduce los errores de Supabase Auth al español
 function translateError(message: string): string {
   if (message.includes("Invalid login credentials"))
     return "Correo o contraseña incorrectos.";
@@ -22,6 +21,12 @@ function translateError(message: string): string {
   return "Ocurrió un error. Inténtalo de nuevo.";
 }
 
+function translateUrlError(code: string | null): string | null {
+  if (code === "link-expirado")
+    return "El link ha expirado o ya fue usado. Solicita uno nuevo.";
+  return null;
+}
+
 type FieldErrors = {
   email?: string;
   password?: string;
@@ -29,6 +34,9 @@ type FieldErrors = {
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const urlError = translateUrlError(searchParams.get("error"));
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
@@ -74,7 +82,6 @@ export default function LoginPage() {
       return;
     }
 
-    // Redirigir al dashboard post-login (próximo paso)
     router.push("/dashboard");
     router.refresh();
   }
@@ -85,6 +92,12 @@ export default function LoginPage() {
       subtitle="Entra para ver y gestionar tu álbum."
     >
       <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
+        {/* Error de URL (link expirado, etc.) */}
+        {urlError && !globalError && (
+          <AuthAlert type="error" message={urlError} />
+        )}
+
+        {/* Error de formulario */}
         {globalError && <AuthAlert type="error" message={globalError} />}
 
         <AuthInput
@@ -110,10 +123,12 @@ export default function LoginPage() {
             >
               Contraseña
             </label>
-            {/* Placeholder: olvidaste tu contraseña — se implementa con onboarding */}
-            <span className="text-xs text-muted cursor-default">
+            <Link
+              href="/forgot-password"
+              className="text-xs text-muted hover:text-brand transition-colors"
+            >
               ¿Olvidaste tu contraseña?
-            </span>
+            </Link>
           </div>
           <AuthInput
             id="password"
@@ -128,7 +143,6 @@ export default function LoginPage() {
                 setFieldErrors((p) => ({ ...p, password: undefined }));
             }}
             error={fieldErrors.password}
-            className="mt-0"
           />
         </div>
 

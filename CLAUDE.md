@@ -4,7 +4,7 @@
 
 App para coleccionistas de barajitas Panini del Mundial 2026. Los usuarios registran su colección, marcan cuáles tienen y cuáles les faltan, y coordinan intercambios con otros coleccionistas cercanos.
 
-**Estado actual:** En desarrollo activo. Auth completo, onboarding listo, dashboard pendiente.
+**Estado actual:** En desarrollo activo. Auth completo, onboarding listo, dashboard listo (MVP). Vista del álbum pendiente.
 
 ---
 
@@ -44,7 +44,7 @@ app/                        # App Router de Next.js
   reset-password/page.tsx   # Nueva contraseña (post-callback)
   auth/callback/route.ts    # Route Handler PKCE — maneja code y token_hash
   onboarding/page.tsx       # Server Component — redirige si ya completó onboarding
-  dashboard/                # TODO: pendiente
+  dashboard/page.tsx        # Dashboard MVP: header, álbum, stats, panel trading
 
 components/
   auth/                     # Componentes reutilizables de autenticación
@@ -185,7 +185,6 @@ Al completar: `completeOnboarding()` guarda en `profiles` y setea `onboarding_co
 
 ## Lo que falta construir
 
-- `/dashboard` — página principal del usuario autenticado
 - `/@[username]` — perfil público
 - `/@[username]/[album-slug]` — colección pública
 - Vista del álbum (grid de barajitas, marcar tengo/falta/repetida)

@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, TablesInsert } from "@/types/database";
 import type {
   CollectionSticker,
+  CollectionSummary,
   Sticker,
   StickerWithStatus,
 } from "@/types/app";
@@ -11,6 +12,32 @@ type Client = SupabaseClient<Database>;
 
 // Tipo local para la respuesta del join sticker + collection_sticker
 type CollectionStickerWithSticker = CollectionSticker & { sticker: Sticker };
+
+/**
+ * Calcula el resumen numérico de una colección (tengo, faltan, repetidas, etc.)
+ * Hace una sola query y computa en JS — la colección tiene máx. 993 filas.
+ */
+export async function getCollectionSummary(
+  client: Client,
+  collectionId: string,
+  totalStickers: number,
+): Promise<CollectionSummary> {
+  const { data, error } = await client
+    .from("collection_stickers")
+    .select("quantity")
+    .eq("collection_id", collectionId);
+
+  if (error) throw error;
+
+  const rows = data as { quantity: number }[];
+  const owned = rows.length;
+  const repeated = rows.filter((r) => r.quantity >= 2).length;
+  const available = rows.reduce((sum, r) => sum + Math.max(0, r.quantity - 1), 0);
+  const missing = totalStickers - owned;
+  const percentage = totalStickers > 0 ? Math.round((owned / totalStickers) * 100) : 0;
+
+  return { total: totalStickers, owned, missing, repeated, available, percentage };
+}
 
 /**
  * Devuelve todas las barajitas registradas en una colección.

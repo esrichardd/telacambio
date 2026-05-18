@@ -162,12 +162,18 @@ export default async function PublicProfilePage({ params }: Props) {
         />
 
         {/* Cambios potenciales — solo si el visitante está logueado y no es el dueño */}
-        {tradeMatch && (
+        {tradeMatch && user && album && (
           <div className="mt-6">
             <PotentialTrades
               theyCanGive={tradeMatch.theyCanGive}
               youCanGive={tradeMatch.youCanGive}
               ownerUsername={profile.username}
+              proposalData={{
+                receiverId: profile.id,
+                albumId: album.id,
+                receiverUsername: profile.username,
+                receiverWhatsapp: whatsapp,
+              }}
             />
           </div>
         )}

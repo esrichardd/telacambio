@@ -100,3 +100,22 @@ export type UpsertStickerInput = {
   sticker_id: string;
   quantity: number;
 };
+
+// -----------------------------------------------------------------------------
+// Tipos de intercambios (trades)
+// Requieren que types/database.ts esté regenerado tras aplicar las migraciones
+// 004_trades_schema.sql, 005_trades_rls.sql y 006_accept_trade_fn.sql
+// -----------------------------------------------------------------------------
+
+export type Trade = Tables<"trades">;
+export type TradeSticker = Tables<"trade_stickers">;
+export type TradeStatus = Enums<"trade_status_type">;
+export type TradeDirection = Enums<"trade_direction_type">;
+
+/** Trade enriquecido con perfiles de los participantes y barajitas detalladas.
+ *  Resultado de getReceivedTrades() y getSentTrades(). */
+export type TradeWithDetails = Trade & {
+  proposer: Pick<Profile, "id" | "username" | "display_name" | "avatar_url">;
+  receiver: Pick<Profile, "id" | "username" | "display_name" | "avatar_url">;
+  stickers: (TradeSticker & { sticker: Sticker })[];
+};

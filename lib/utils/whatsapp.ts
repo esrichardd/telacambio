@@ -64,3 +64,37 @@ export function buildWhatsAppLink(
   const encoded = encodeURIComponent(message);
   return `https://wa.me/${clean}?text=${encoded}`;
 }
+
+/**
+ * Construye el mensaje de WhatsApp para una propuesta de intercambio.
+ * @param receiverUsername - Username del receptor de la propuesta
+ * @param iGive - Barajitas que el proponente da al receptor
+ * @param iReceive - Barajitas que el proponente recibe del receptor
+ */
+export function buildTradeProposalMessage(
+  receiverUsername: string,
+  iGive: Sticker[],
+  iReceive: Sticker[],
+): string {
+  const lines: string[] = [
+    `🤝 *Propuesta de intercambio* — Mundial 2026`,
+    `Para @${receiverUsername}`,
+    "",
+  ];
+
+  if (iGive.length > 0) {
+    lines.push(`✅ *Yo te doy (${iGive.length}):*`);
+    lines.push(iGive.map((s) => s.code).join(", "));
+    lines.push("");
+  }
+
+  if (iReceive.length > 0) {
+    lines.push(`📥 *Yo recibo (${iReceive.length}):*`);
+    lines.push(iReceive.map((s) => s.code).join(", "));
+    lines.push("");
+  }
+
+  lines.push(`📲 Acordemos el intercambio — telacambio.co`);
+
+  return lines.join("\n");
+}

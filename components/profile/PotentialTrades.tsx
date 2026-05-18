@@ -1,5 +1,6 @@
 import type { Sticker } from "@/types/app";
 import { sortSectionsByAlbumOrder } from "@/lib/constants/album-order";
+import ProposeTradeSheet, { type ProposalData } from "./ProposeTradeSheet";
 
 interface PotentialTradesProps {
   /** Barajitas que el dueño del perfil tiene repetidas y al visitante le faltan */
@@ -7,6 +8,8 @@ interface PotentialTradesProps {
   /** Barajitas que el visitante tiene repetidas y al dueño le faltan */
   youCanGive: Sticker[];
   ownerUsername: string;
+  /** Present only when the visitor is logged in — enables propose-trade UI */
+  proposalData?: ProposalData;
 }
 
 // Groups stickers by section for compact display
@@ -53,6 +56,7 @@ export default function PotentialTrades({
   theyCanGive,
   youCanGive,
   ownerUsername,
+  proposalData,
 }: PotentialTradesProps) {
   const total = theyCanGive.length + youCanGive.length;
 
@@ -128,6 +132,15 @@ export default function PotentialTrades({
           )}
         </div>
       </div>
+
+      {/* Propose trade button — only when viewer is logged in */}
+      {proposalData && (
+        <ProposeTradeSheet
+          theyCanGive={theyCanGive}
+          youCanGive={youCanGive}
+          proposalData={proposalData}
+        />
+      )}
     </div>
   );
 }

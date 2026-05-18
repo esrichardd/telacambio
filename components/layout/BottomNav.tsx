@@ -38,20 +38,63 @@ const NAV_ITEMS = [
         strokeLinejoin="round"
       >
         <rect
-          x="3" y="3" width="7" height="7" rx="1"
+          x="3"
+          y="3"
+          width="7"
+          height="7"
+          rx="1"
           fill={active ? "currentColor" : "none"}
         />
         <rect
-          x="14" y="3" width="7" height="7" rx="1"
+          x="14"
+          y="3"
+          width="7"
+          height="7"
+          rx="1"
           fill={active ? "currentColor" : "none"}
         />
         <rect
-          x="14" y="14" width="7" height="7" rx="1"
+          x="14"
+          y="14"
+          width="7"
+          height="7"
+          rx="1"
           fill={active ? "currentColor" : "none"}
         />
         <rect
-          x="3" y="14" width="7" height="7" rx="1"
+          x="3"
+          y="14"
+          width="7"
+          height="7"
+          rx="1"
           fill={active ? "currentColor" : "none"}
+        />
+      </svg>
+    ),
+  },
+  {
+    href: "/intercambios",
+    label: "Intercambios",
+    icon: (active: boolean) => (
+      <svg
+        width="22"
+        height="22"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.8}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path
+          d="M7 16V4m0 0L3 8m4-4l4 4"
+          stroke="currentColor"
+          strokeWidth={active ? 2.2 : 1.8}
+        />
+        <path
+          d="M17 8v12m0 0l4-4m-4 4l-4-4"
+          stroke="currentColor"
+          strokeWidth={active ? 2.2 : 1.8}
         />
       </svg>
     ),
@@ -94,7 +137,9 @@ export default function BottomNav() {
               }`}
             >
               {item.icon(active)}
-              <span className={`text-[10px] font-medium leading-none ${active ? "text-brand" : "text-muted"}`}>
+              <span
+                className={`text-[10px] font-medium leading-none ${active ? "text-brand" : "text-muted"}`}
+              >
                 {item.label}
               </span>
             </Link>

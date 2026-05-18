@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 
 // Matches https://telacambio.co/username or http://www.telacambio.co/username
 const TELACAMBIO_PATTERN =
@@ -14,10 +13,10 @@ interface QRScannerModalProps {
 }
 
 export default function QRScannerModal({ onClose }: QRScannerModalProps) {
-  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [scanning, setScanning] = useState(true);
-  // Ref to the stop function so cleanup can call it without stale closures
+  // Prevents the success callback from firing more than once at 10fps
+  const redirectedRef = useRef(false);
   const stopFnRef = useRef<(() => Promise<void>) | null>(null);
 
   useEffect(() => {
@@ -28,26 +27,34 @@ export default function QRScannerModal({ onClose }: QRScannerModalProps) {
         // Dynamic import keeps html5-qrcode out of the SSR bundle
         const { Html5Qrcode } = await import("html5-qrcode");
         const scanner = new Html5Qrcode(READER_ID);
-        stopFnRef.current = () => scanner.stop();
+
+        // Wrap stop so we can safely call it from cleanup too
+        const doStop = async () => {
+          try {
+            await scanner.stop();
+          } catch {
+            // Already stopped or never started — safe to ignore
+          }
+        };
+        stopFnRef.current = doStop;
 
         await scanner.start(
           { facingMode: "environment" },
           { fps: 10, qrbox: { width: 240, height: 240 } },
           (decodedText) => {
-            if (!isMounted) return;
+            // Guard: only act once, even if the callback fires multiple times
+            if (!isMounted || redirectedRef.current) return;
             const match = decodedText.match(TELACAMBIO_PATTERN);
             if (match) {
+              redirectedRef.current = true;
               const username = match[2];
               setScanning(false);
-              scanner
-                .stop()
-                .catch(() => {})
-                .finally(() => {
-                  if (isMounted) {
-                    onClose();
-                    router.push(`/${username}`);
-                  }
-                });
+              // Stop the camera first, then do a hard navigation.
+              // window.location.href avoids React router state issues
+              // that occur when navigating right after unmounting.
+              doStop().finally(() => {
+                window.location.href = `/${username}`;
+              });
             }
           },
           () => {

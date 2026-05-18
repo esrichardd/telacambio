@@ -15,14 +15,14 @@ Plataforma para coleccionistas de barajitas Panini del Mundial 2026. Registra tu
 
 ## Stack
 
-| Capa | Tecnología |
-|------|-----------|
-| Framework | Next.js 16 (App Router) |
-| UI | React 19 |
-| Estilos | Tailwind CSS v4 |
-| Auth + DB | Supabase |
-| Lenguaje | TypeScript strict |
-| Package manager | pnpm |
+| Capa            | Tecnología              |
+| --------------- | ----------------------- |
+| Framework       | Next.js 16 (App Router) |
+| UI              | React 19                |
+| Estilos         | Tailwind CSS v4         |
+| Auth + DB       | Supabase                |
+| Lenguaje        | TypeScript strict       |
+| Package manager | pnpm                    |
 
 ---
 
@@ -69,10 +69,12 @@ database/seeds/002_stickers_mundial_2026.sql       # 993 stickers
 ### 4. Configurar Auth en Supabase
 
 En Authentication → Settings:
+
 - **Site URL**: `http://localhost:3000`
 - **Redirect URLs**: agrega `http://localhost:3000/auth/callback`
 
 En Authentication → Email Templates, pega el contenido de:
+
 - `email-templates/confirm-signup.html`
 - `email-templates/reset-password.html`
 
@@ -118,6 +120,7 @@ Login → dashboard (si ya completó onboarding)
 ```
 
 **Onboarding:**
+
 1. Elige tu `@username` y nombre para mostrar
 2. Selecciona tu departamento y ciudad en Colombia
 3. Define tu estado de intercambio y WhatsApp opcional
@@ -126,16 +129,23 @@ Login → dashboard (si ya completó onboarding)
 
 ## Estado del proyecto
 
-| Módulo | Estado |
-|--------|--------|
-| Autenticación (registro, login, reset) | ✅ Listo |
-| Onboarding | ✅ Listo |
-| Dashboard | 🚧 Pendiente |
-| Perfil público `/@username` | 🚧 Pendiente |
-| Vista del álbum | 🚧 Pendiente |
-| Sistema de intercambios | 🚧 Pendiente |
-| Grupos | 🚧 Pendiente |
-| Búsqueda de coleccionistas | 🚧 Pendiente |
+| Módulo                                 | Estado         |
+| -------------------------------------- | -------------- |
+| Autenticación (registro, login, reset) | ✅ Listo       |
+| Onboarding                             | ✅ Listo       |
+| Dashboard                              | ✅ Listo (MVP) |
+| Vista del álbum                        | ✅ Listo       |
+| Perfil público `/@username`            | ✅ Listo       |
+| Sistema de intercambios                | 🚧 Pendiente   |
+| Grupos                                 | 🚧 Pendiente   |
+| Búsqueda de coleccionistas             | 🚧 Pendiente   |
+
+## Lo que falta construir
+
+- `/@[username]/[album-slug]` — colección pública por álbum (el perfil actual muestra todo en una sola página)
+- Sistema de intercambios entre usuarios
+- Grupos privados entre amigos
+- Búsqueda de coleccionistas cercanos por ubicación
 
 ---
 

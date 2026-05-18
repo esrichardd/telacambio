@@ -1,212 +1,93 @@
 @AGENTS.md
 
-# TeLaCambio — Contexto del proyecto
+# TeLaCambio — Lineamientos del proyecto
 
-App para coleccionistas de barajitas Panini del Mundial 2026. Los usuarios registran su colección, marcan cuáles tienen y cuáles les faltan, y coordinan intercambios con otros coleccionistas cercanos.
+## Lenguaje
 
-**Estado actual:** En desarrollo activo. Auth completo, onboarding listo, dashboard listo (MVP), vista del álbum lista, perfil público listo.
-
----
-
-## Stack
-
-| Capa                | Tecnología           | Versión               |
-| ------------------- | -------------------- | --------------------- |
-| Framework           | Next.js (App Router) | 16.2.6                |
-| UI                  | React                | 19.2.4                |
-| Estilos             | Tailwind CSS v4      | ^4                    |
-| Backend / Auth / DB | Supabase             | @supabase/ssr ^0.10.3 |
-| Lenguaje            | TypeScript strict    | ^5                    |
-| Package manager     | pnpm                 | —                     |
-
-**Comandos:**
-
-```bash
-pnpm dev    # desarrollo con Turbopack
-pnpm build
-pnpm lint
-```
+- **Código** (variables, funciones, constantes, tipos, nombres de archivos, columnas de DB): siempre en **inglés**.
+- **UI** (strings visibles al usuario, mensajes de error, labels): siempre en **español neutro**, sin regionalismos.
+- **Comentarios en código**: inglés.
 
 ---
 
-## Arquitectura
+## Naming conventions
 
-### Estructura de carpetas clave
+| Elemento                  | Convención           | Ejemplo                             |
+| ------------------------- | -------------------- | ----------------------------------- |
+| Componentes React         | PascalCase           | `AlbumView.tsx`                     |
+| Archivos en `lib/`, `db/` | kebab-case           | `collection-stickers.ts`            |
+| Funciones y hooks         | camelCase            | `getProfileById`, `useAlbumFilters` |
+| Constantes                | SCREAMING_SNAKE_CASE | `COLOMBIA_DEPARTAMENTOS`            |
+| Columnas en DB            | snake_case           | `onboarding_completed`              |
+| Rutas de URL              | kebab-case           | `/reset-password`                   |
+| Tipos TypeScript          | PascalCase           | `TradingStatus`, `OnboardingData`   |
 
-```
-app/                        # App Router de Next.js
-  layout.tsx                # Root layout con suppressHydrationWarning en body
-  page.tsx                  # Landing page (home)
-  register/page.tsx         # Registro con email
-  login/page.tsx            # Login con email
-  forgot-password/page.tsx  # Solicitar reset
-  verify-email/page.tsx     # Pantalla de "revisa tu correo"
-  reset-password/page.tsx   # Nueva contraseña (post-callback)
-  auth/callback/route.ts    # Route Handler PKCE — maneja code y token_hash
-  onboarding/page.tsx       # Server Component — redirige si ya completó onboarding
-  dashboard/page.tsx        # Dashboard MVP: header, álbum, stats, panel trading
-  album/page.tsx            # Server Component — carga álbum, stickers agrupados, colección
-  [username]/page.tsx       # Perfil público — Server Component, accesible sin login
+---
 
-components/
-  auth/                     # Componentes reutilizables de autenticación
-    AuthCard.tsx            # Wrapper full-page con glow y brand
-    AuthInput.tsx           # Input con label, error, hint, showToggle (forwardRef)
-    AuthSelect.tsx          # Select con mismo estilo que AuthInput
-    AuthButton.tsx          # primary (verde) y ghost (outline), con loading spinner
-    AuthAlert.tsx           # error | success | info
-  onboarding/
-    OnboardingShell.tsx     # Client Component — orquesta los 3 pasos
-    OnboardingProgress.tsx  # Barra de progreso por pasos
-    StepUsername.tsx        # Paso 1: username + display_name
-    StepLocation.tsx        # Paso 2: departamento + ciudad (Colombia)
-    StepTrading.tsx         # Paso 3: trading_status + whatsapp
-  album/
-    AlbumView.tsx           # Client Component principal — ownedMap, filtros, optimistic updates
-    StickerSection.tsx      # Sección por grupo (FWC, ARG, MEX…) con header y grid
-    StickerTile.tsx         # Tile individual: 3 estados (falta/tengo/repetida) + flash
-    AlbumFilters.tsx        # Filtros pill: all | owned | missing | repeated
-    QuickAddBar.tsx         # Barra de entrada rápida por código (ej: ARG5)
-  profile/
-    ProfileHeader.tsx       # Avatar, display_name, ciudad, badge trading, botón WhatsApp
-    PotentialTrades.tsx     # Cruce de colecciones: qué puede darte / qué puedes darle
-    ReadOnlyAlbumView.tsx   # Álbum en modo lectura — reutiliza StickerSection sin interacción
+## Estructura de carpetas
 
-lib/
-  supabase/
-    client.ts               # createClient() para Client Components
-    server.ts               # createClient() async para Server Components
-    proxy.ts                # Middleware para refresh de sesión
-  db/
-    profiles.ts             # getProfileById, checkUsernameAvailable, completeOnboarding, etc.
-    albums.ts
-    stickers.ts
-    collections.ts
-    collection-stickers.ts
-    trading-spots.ts
-    groups.ts
-  constants/
-    colombia.ts             # COLOMBIA_DEPARTAMENTOS[], getCiudadesByDepartamento()
+Regla general: cada capa tiene una responsabilidad única. No mezclar lógica de datos con componentes UI.
 
-types/
-  app.ts                    # Tipos de dominio: Profile, Album, OnboardingData, TradingStatus, etc.
-  database.ts               # Tipos auto-generados por Supabase CLI (NO editar a mano)
+- **Nueva ruta** → `app/[ruta]/page.tsx`. Server Component por defecto.
+- **Componentes de una feature** → `components/[feature]/NombreComponente.tsx`. Un archivo por componente.
+- **Queries a la base de datos** → `lib/db/[tabla].ts`. Una función exportada por operación.
+- **Tipos de dominio** → `types/app.ts`. Nunca agregar tipos en archivos de componentes.
+- **Constantes reutilizables** → `lib/constants/[nombre].ts`.
+- **Utilidades genéricas** → `lib/utils/[nombre].ts`.
 
-database/
-  migrations/
-    001_schema.sql          # Tablas, enums, índices
-    002_triggers.sql        # updated_at, handle_new_user, validate_username
-    003_rls_policies.sql    # Row Level Security
-  seeds/
-    001_mundial_2026.sql    # El álbum Panini Mundial 2026
-    002_stickers_mundial_2026.sql  # 993 stickers en formato MEX1-MEX20
+---
 
-email-templates/
-  confirm-signup.html       # Template HTML para Supabase (verificación de email)
-  reset-password.html       # Template HTML para Supabase (reset de contraseña)
-```
+## Base de datos y migraciones
+
+- **Cada cambio en el schema requiere un archivo de migración nuevo**, numerado secuencialmente (`004_...`, `005_...`). Nunca editar migraciones existentes.
+- Cambios de schema (tablas, columnas, índices, enums) van en su propio archivo.
+- Cambios de triggers van en su propio archivo.
+- Cambios de RLS policies van en su propio archivo.
+- Después de cualquier cambio en la DB, regenerar los tipos: `pnpm supabase gen types typescript --linked > types/database.ts`.
+
+---
+
+## React y Next.js
+
+- **Server Components por defecto.** Solo agregar `"use client"` cuando el componente usa `useState`, `useEffect`, event handlers del browser, o refs.
+- No pasar funciones no serializables de Server a Client Components.
+- No usar `setState` síncronamente en el cuerpo de un `useEffect` — React 19 lo trata como error. Derivar estados síncronos directamente en el render.
+- Formularios: validación en el cliente antes de cualquier llamada a Supabase. Errores mostrados en español.
 
 ---
 
 ## Supabase
 
-### Auth flow (PKCE)
+- En **Server Components y Route Handlers**: usar `createClient()` de `lib/supabase/server.ts` (es async, hay que awaitearlo).
+- En **Client Components**: usar `createClient()` de `lib/supabase/client.ts`.
+- Nunca exponer la `service role key` al cliente.
 
-`@supabase/ssr` v0.10.3 usa PKCE por defecto → envía `?code=xxx` en el callback, no `token_hash`.
+---
 
-El Route Handler en `app/auth/callback/route.ts` maneja ambos casos:
+## TypeScript e imports
 
-- `?code=` → `exchangeCodeForSession(code)`
-- `?token_hash=&type=` → `verifyOtp({ token_hash, type })` (fallback)
-
-Después de verificar:
-
-- `type === "recovery"` → redirige a `/reset-password`
-- Cualquier otro → redirige a `/onboarding`
-- Error → redirige a `/login?error=link-expirado`
-
-### Base de datos — tablas principales
-
-- `albums` — catálogo de álbumes (solo admin escribe)
-- `stickers` — 993 stickers del Mundial 2026 en formato `MEX1`, `ARG22`, `FWC1`, etc.
-- `profiles` — extiende `auth.users`. Se crea automáticamente con el trigger `handle_new_user` con username temporal `user_XXXXXXXX`
-- `collections` — una por usuario por álbum
-- `collection_stickers` — barajitas de una colección con `quantity` (ausente=falta, 1=la tengo, ≥2=repetida)
-- `trading_spots` — puntos físicos de intercambio
-- `groups` — grupos privados entre amigos
-
-### RLS
-
-La visibilidad de colecciones y perfiles hereda de `profiles.is_public`. El service role key (nunca expuesto al cliente) bypasea RLS para operaciones de admin.
+- Importar tipos de dominio siempre desde `@/types/app`. **Nunca** importar desde `types/database.ts` directamente en componentes o en `lib/db/`.
+- `types/database.ts` es generado por Supabase CLI — no editar a mano.
+- Path alias `@/` apunta a la raíz del proyecto.
+- TypeScript en modo strict. No usar `any`.
 
 ---
 
 ## Diseño y estilos
 
-Tailwind CSS v4 con variables CSS personalizadas. Paleta:
-
-```css
---color-brand: #1d9e75 /* verde principal */ --color-brand-dark: #178a65
-  /* hover del verde */ --background: #111111 /* fondo oscuro */
-  --color-surface: #1a1a1a /* tarjetas */ --color-surface-subtle: #161616
-  --color-border: #2a2a2a --color-foreground: #f5f5f5 --color-muted: #888888;
-```
-
-Clases de utilidad frecuentes: `bg-surface`, `bg-surface-subtle`, `text-foreground`, `text-muted`, `text-brand`, `border-border`, `bg-brand`, `bg-brand/8`.
-
-Estilo general: dark mode, bordes `rounded-xl` / `rounded-2xl`, botones con `rounded-full`, sombras sutiles.
-
----
-
-## Convenciones de código
-
-- **Server Components** por defecto. Solo agregar `"use client"` cuando hay estado, efectos, o eventos del browser.
-- **`createClient()`** de `lib/supabase/server.ts` (async) en Server Components y Route Handlers. De `lib/supabase/client.ts` en Client Components.
-- **Formularios**: estado local con `useState`, validación en el cliente antes de llamar a Supabase, errores en español.
-- **No usar `setState` síncronamente en el cuerpo de un `useEffect`** — React 19 lo marca como error. Derivar estados síncronos directamente en render.
-- **Tipos**: siempre de `@/types/app` (nunca importar de `database.ts` directamente en componentes).
-- **Paths**: alias `@/` apunta a la raíz del proyecto.
-- **Idioma**: toda la UI en español neutro (sin regionalismos).
-
----
-
-## Flujo de usuario
+Tailwind CSS v4. Variables CSS disponibles:
 
 ```
-/register → email enviado → /verify-email?type=signup
-         → click en correo → /auth/callback → /onboarding
-         → completa 3 pasos → /dashboard
-
-/login → /dashboard (si ya completó onboarding)
-       → /onboarding (si no)
-
-/forgot-password → email enviado → /verify-email?type=reset
-                → click en correo → /auth/callback → /reset-password
-                → nueva contraseña → /login
+--color-brand: #1d9e75        /* verde principal */
+--color-brand-dark: #178a65   /* hover */
+--background: #111111
+--color-surface: #1a1a1a
+--color-surface-subtle: #161616
+--color-border: #2a2a2a
+--color-foreground: #f5f5f5
+--color-muted: #888888
 ```
 
-### Onboarding (3 pasos)
+Clases utilitarias frecuentes: `bg-surface`, `bg-surface-subtle`, `text-foreground`, `text-muted`, `text-brand`, `border-border`, `bg-brand`, `bg-brand/8`.
 
-1. **Tu perfil** — username único (validación en tiempo real con debounce 500ms) + display_name opcional
-2. **Ubicación** — país fijo Colombia 🇨🇴, cascada departamento → ciudad. Paso omitible.
-3. **Cómo intercambias** — trading_status (active/paused/not_trading) + WhatsApp opcional con toggle de visibilidad
-
-Al completar: `completeOnboarding()` guarda en `profiles` y setea `onboarding_completed = true`. Redirige a `/dashboard`.
-
----
-
-## Lo que falta construir
-
-- `/@[username]/[album-slug]` — colección pública (el perfil actual muestra todo en una sola página)
-- Sistema de intercambios
-- Grupos
-- Búsqueda de usuarios cercanos
-
----
-
-## Variables de entorno necesarias
-
-```bash
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-```
+Estilo general: dark mode, `rounded-xl` / `rounded-2xl` en tarjetas, `rounded-full` en botones, sombras sutiles.

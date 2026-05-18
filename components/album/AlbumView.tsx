@@ -34,9 +34,12 @@ function isSpecialSticker(sticker: Sticker): boolean {
 
 interface AlbumViewProps {
   album: Album;
-  collectionId: string;
   groupedStickers: Record<string, Sticker[]>;
   initialOwned: { sticker_id: string; quantity: number }[];
+  /** En modo escritura, el ID de la colección del usuario. No requerido en readOnly. */
+  collectionId?: string;
+  /** Cuando es true: sin FAB, sin modal, sin hints de interacción, grid no-interactivo. */
+  readOnly?: boolean;
 }
 
 export default function AlbumView({
@@ -44,6 +47,7 @@ export default function AlbumView({
   collectionId,
   groupedStickers,
   initialOwned,
+  readOnly = false,
 }: AlbumViewProps) {
   const [ownedMap, setOwnedMap] = useState<Map<string, number>>(
     () => new Map(initialOwned.map((s) => [s.sticker_id, s.quantity])),
@@ -161,20 +165,23 @@ export default function AlbumView({
     return [...fwcKeys, ...middle, ...extra, ...cc];
   }, [expandedGroups]);
 
-  // ── Sync helpers ──────────────────────────────────────────────────────────
+  // ── Sync helpers (solo usados en modo escritura) ──────────────────────────
   async function syncUpsert(stickerId: string, quantity: number) {
+    if (!collectionId) return;
     const supabase = createClient();
     await upsertSticker(supabase, collectionId, stickerId, quantity);
   }
 
   async function syncRemove(stickerId: string) {
+    if (!collectionId) return;
     const supabase = createClient();
     await removeSticker(supabase, collectionId, stickerId);
   }
 
-  // ── Handlers de tiles ─────────────────────────────────────────────────────
+  // ── Handlers de tiles (no-ops en readOnly) ────────────────────────────────
   const handleTileAdd = useCallback(
     (sticker: Sticker) => {
+      if (readOnly) return;
       const current = ownedMap.get(sticker.id) ?? 0;
       const next = current + 1;
       setOwnedMap((prev) => new Map(prev).set(sticker.id, next));
@@ -182,11 +189,12 @@ export default function AlbumView({
         syncUpsert(sticker.id, next);
       });
     },
-    [ownedMap, collectionId],
+    [ownedMap, collectionId, readOnly],
   );
 
   const handleTileRemove = useCallback(
     (sticker: Sticker) => {
+      if (readOnly) return;
       const current = ownedMap.get(sticker.id) ?? 0;
       if (current <= 0) return;
 
@@ -207,7 +215,7 @@ export default function AlbumView({
         });
       }
     },
-    [ownedMap, collectionId],
+    [ownedMap, collectionId, readOnly],
   );
 
   // ── Handler del modal (agregar por código) ────────────────────────────────
@@ -357,8 +365,17 @@ export default function AlbumView({
 
       {/* ── Cabecera no-sticky ───────────────────────────────────────────── */}
       <div className="max-w-2xl mx-auto px-4 pt-20 pb-4">
-        <h1 className="text-2xl font-bold text-foreground">Mi álbum</h1>
-        <p className="text-sm text-muted mt-0.5">{album.name}</p>
+        {readOnly ? (
+          <>
+            <h2 className="text-xl font-bold text-foreground">Álbum</h2>
+            <p className="text-sm text-muted mt-0.5">{album.name}</p>
+          </>
+        ) : (
+          <>
+            <h1 className="text-2xl font-bold text-foreground">Mi álbum</h1>
+            <p className="text-sm text-muted mt-0.5">{album.name}</p>
+          </>
+        )}
       </div>
 
       {/* ── Sticky — filtros + buscador + hint ───────────────────────────── */}
@@ -421,12 +438,14 @@ export default function AlbumView({
           </div>
         </div>
 
-        {/* Hint de uso */}
-        <div className="max-w-2xl mx-auto px-4 pb-2.5">
-          <p className="text-[10px] text-muted text-center">
-            Toca para agregar · Mantén presionado para eliminar
-          </p>
-        </div>
+        {/* Hint de uso — solo en modo escritura */}
+        {!readOnly && (
+          <div className="max-w-2xl mx-auto px-4 pb-2.5">
+            <p className="text-[10px] text-muted text-center">
+              Toca para agregar · Mantén presionado para eliminar
+            </p>
+          </div>
+        )}
       </div>
 
       {/* ── Contenido ─────────────────────────────────────────────────────── */}
@@ -491,7 +510,9 @@ export default function AlbumView({
         </div>
 
         {/* Secciones de barajitas */}
-        <div className="flex flex-col gap-8">
+        <div
+          className={`flex flex-col gap-8 ${readOnly ? "pointer-events-none select-none" : ""}`}
+        >
           {sections.map((section) => {
             const stickers = visibleStickers(expandedGroups[section] ?? []);
             if (stickers.length === 0) return null;
@@ -522,38 +543,42 @@ export default function AlbumView({
         </div>
       </div>
 
-      {/* ── FAB ───────────────────────────────────────────────────────────── */}
-      <button
-        type="button"
-        onClick={() => setModalOpen(true)}
-        className="fixed bottom-20 right-4 z-30
-          w-14 h-14 rounded-full bg-brand text-white shadow-lg shadow-brand/30
-          hover:bg-brand-dark active:scale-95
-          transition-all duration-150
-          flex items-center justify-center"
-        aria-label="Agregar barajitas"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+      {/* ── FAB — solo en modo escritura ──────────────────────────────────── */}
+      {!readOnly && (
+        <button
+          type="button"
+          onClick={() => setModalOpen(true)}
+          className="fixed bottom-20 right-4 z-30
+            w-14 h-14 rounded-full bg-brand text-white shadow-lg shadow-brand/30
+            hover:bg-brand-dark active:scale-95
+            transition-all duration-150
+            flex items-center justify-center"
+          aria-label="Agregar barajitas"
         >
-          <path d="M5 12h14M12 5v14" />
-        </svg>
-      </button>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M5 12h14M12 5v14" />
+          </svg>
+        </button>
+      )}
 
-      {/* ── Modal ─────────────────────────────────────────────────────────── */}
-      <AddStickerModal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onAdd={handleQuickAdd}
-      />
+      {/* ── Modal — solo en modo escritura ────────────────────────────────── */}
+      {!readOnly && (
+        <AddStickerModal
+          open={modalOpen}
+          onClose={() => setModalOpen(false)}
+          onAdd={handleQuickAdd}
+        />
+      )}
     </div>
   );
 }

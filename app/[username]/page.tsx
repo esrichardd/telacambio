@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import type { Sticker } from "@/types/app";
 import { createClient } from "@/lib/supabase/server";
-import { getProfileByUsername, getProfileById } from "@/lib/db/profiles";
+import { getProfileByUsername } from "@/lib/db/profiles";
 import { getActiveAlbums } from "@/lib/db/albums";
 import { getCollection } from "@/lib/db/collections";
 import {
@@ -12,7 +12,7 @@ import {
 import { getStickersByAlbumGrouped } from "@/lib/db/stickers";
 import ProfileHeader from "@/components/profile/ProfileHeader";
 import PotentialTrades from "@/components/profile/PotentialTrades";
-import ReadOnlyAlbumView from "@/components/profile/ReadOnlyAlbumView";
+import AlbumView from "@/components/album/AlbumView";
 
 interface Props {
   params: Promise<{ username: string }>;
@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 interface TradeMatch {
   theyCanGive: Sticker[]; // owner tiene repetidas, visitor las necesita
-  youCanGive: Sticker[];  // visitor tiene repetidas, owner las necesita
+  youCanGive: Sticker[]; // visitor tiene repetidas, owner las necesita
 }
 
 function computeTradeMatches(
@@ -39,7 +39,9 @@ function computeTradeMatches(
   visitorOwned: { sticker_id: string; quantity: number }[],
 ): TradeMatch {
   const ownerMap = new Map(ownerOwned.map((s) => [s.sticker_id, s.quantity]));
-  const visitorMap = new Map(visitorOwned.map((s) => [s.sticker_id, s.quantity]));
+  const visitorMap = new Map(
+    visitorOwned.map((s) => [s.sticker_id, s.quantity]),
+  );
 
   const theyCanGive: Sticker[] = [];
   const youCanGive: Sticker[] = [];
@@ -93,7 +95,11 @@ export default async function PublicProfilePage({ params }: Props) {
     const ownerCollection = await getCollection(supabase, profile.id, album.id);
     if (ownerCollection) {
       const [summaryData, rawOwned, grouped] = await Promise.all([
-        getCollectionSummary(supabase, ownerCollection.id, album.total_stickers),
+        getCollectionSummary(
+          supabase,
+          ownerCollection.id,
+          album.total_stickers,
+        ),
         getCollectionStickers(supabase, ownerCollection.id),
         getStickersByAlbumGrouped(supabase, album.id),
       ]);
@@ -112,12 +118,18 @@ export default async function PublicProfilePage({ params }: Props) {
   if (user && !isSelf && album && Object.keys(groupedStickers).length > 0) {
     const visitorCollection = await getCollection(supabase, user.id, album.id);
     if (visitorCollection) {
-      const visitorOwned = await getCollectionStickers(supabase, visitorCollection.id);
+      const visitorOwned = await getCollectionStickers(
+        supabase,
+        visitorCollection.id,
+      );
       const allStickers = Object.values(groupedStickers).flat();
       tradeMatch = computeTradeMatches(
         allStickers,
         ownerOwned,
-        visitorOwned.map((s) => ({ sticker_id: s.sticker_id, quantity: s.quantity })),
+        visitorOwned.map((s) => ({
+          sticker_id: s.sticker_id,
+          quantity: s.quantity,
+        })),
       );
     }
   }
@@ -162,10 +174,11 @@ export default async function PublicProfilePage({ params }: Props) {
 
         {/* Álbum en modo lectura */}
         {album && hasCollection && (
-          <ReadOnlyAlbumView
+          <AlbumView
             album={album}
             groupedStickers={groupedStickers}
-            ownedStickers={ownerOwned}
+            initialOwned={ownerOwned}
+            readOnly
           />
         )}
 

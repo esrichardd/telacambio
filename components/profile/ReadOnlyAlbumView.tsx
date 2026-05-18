@@ -3,7 +3,9 @@
 import { useState, useMemo } from "react";
 import type { Album, Sticker } from "@/types/app";
 import StickerSection from "@/components/album/StickerSection";
-import AlbumFilters, { type FilterState } from "@/components/album/AlbumFilters";
+import AlbumFilters, {
+  type FilterState,
+} from "@/components/album/AlbumFilters";
 
 interface ReadOnlyAlbumViewProps {
   album: Album;
@@ -88,7 +90,9 @@ export default function ReadOnlyAlbumView({
               stickers={stickers}
               ownedMap={ownedMap}
               flashId={null}
-              onTileClick={noOp}
+              isSpecialFn={() => false}
+              onTileAdd={noOp}
+              onTileRemove={noOp}
             />
           );
         })}

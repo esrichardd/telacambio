@@ -9,6 +9,8 @@ import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import AlbumCard from "@/components/dashboard/AlbumCard";
 import StatsRow from "@/components/dashboard/StatsRow";
 import TradingPanel from "@/components/dashboard/TradingPanel";
+import BottomNav from "@/components/layout/BottomNav";
+import AppHeader from "@/components/layout/AppHeader";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -40,6 +42,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <AppHeader />
       {/* Glow de fondo sutil */}
       <div
         aria-hidden
@@ -50,7 +53,7 @@ export default async function DashboardPage() {
         }}
       />
 
-      <div className="relative z-10 max-w-lg mx-auto px-4 pt-10 pb-16">
+      <div className="relative z-10 max-w-lg mx-auto px-4 pt-20 pb-28">
         {/* Header con avatar y nombre */}
         <DashboardHeader profile={profile} />
 
@@ -67,6 +70,7 @@ export default async function DashboardPage() {
           <TradingPanel profile={profile} />
         </div>
       </div>
+      <BottomNav />
     </div>
   );
 }

@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { getProfileById } from "@/lib/db/profiles";
 import ProfileSettingsForm from "@/components/settings/ProfileSettingsForm";
+import BottomNav from "@/components/layout/BottomNav";
+import AppHeader from "@/components/layout/AppHeader";
 
 export const metadata: Metadata = {
   title: "Configuración · TeLaCambio",
@@ -22,6 +24,7 @@ export default async function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <AppHeader />
       <div
         aria-hidden
         className="pointer-events-none fixed inset-0 z-0"
@@ -31,9 +34,10 @@ export default async function SettingsPage() {
         }}
       />
 
-      <div className="relative z-10 max-w-lg mx-auto px-4 pt-10 pb-16">
+      <div className="relative z-10 max-w-lg mx-auto px-4 pt-20 pb-28">
         <ProfileSettingsForm profile={profile} userId={user.id} />
       </div>
+      <BottomNav />
     </div>
   );
 }

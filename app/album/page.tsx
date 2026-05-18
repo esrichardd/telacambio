@@ -6,6 +6,8 @@ import { getOrCreateCollection } from "@/lib/db/collections";
 import { getCollectionStickers, } from "@/lib/db/collection-stickers";
 import { getStickersByAlbumGrouped } from "@/lib/db/stickers";
 import AlbumView from "@/components/album/AlbumView";
+import BottomNav from "@/components/layout/BottomNav";
+import AppHeader from "@/components/layout/AppHeader";
 
 export default async function AlbumPage() {
   const supabase = await createClient();
@@ -31,14 +33,18 @@ export default async function AlbumPage() {
   const ownedStickers = await getCollectionStickers(supabase, collection.id);
 
   return (
-    <AlbumView
-      album={album}
-      collectionId={collection.id}
-      groupedStickers={groupedStickers}
-      initialOwned={ownedStickers.map((s) => ({
-        sticker_id: s.sticker_id,
-        quantity: s.quantity,
-      }))}
-    />
+    <>
+      <AppHeader />
+      <AlbumView
+        album={album}
+        collectionId={collection.id}
+        groupedStickers={groupedStickers}
+        initialOwned={ownedStickers.map((s) => ({
+          sticker_id: s.sticker_id,
+          quantity: s.quantity,
+        }))}
+      />
+      <BottomNav />
+    </>
   );
 }

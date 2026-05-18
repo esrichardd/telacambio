@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback, useMemo, useTransition } from "react";
-import Link from "next/link";
 import type { Album, Sticker } from "@/types/app";
 import { createClient } from "@/lib/supabase/client";
 import { upsertSticker, removeSticker } from "@/lib/db/collection-stickers";
@@ -24,12 +23,10 @@ export default function AlbumView({
   groupedStickers,
   initialOwned,
 }: AlbumViewProps) {
-  // Map sticker_id → quantity (0 = me falta, no está en el map)
   const [ownedMap, setOwnedMap] = useState<Map<string, number>>(
     () => new Map(initialOwned.map((s) => [s.sticker_id, s.quantity])),
   );
 
-  // Map code → sticker para búsqueda rápida en QuickAdd
   const codeMap = useMemo<Map<string, Sticker>>(() => {
     const map = new Map<string, Sticker>();
     for (const stickers of Object.values(groupedStickers)) {
@@ -44,7 +41,6 @@ export default function AlbumView({
   const [flashId, setFlashId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
-  // Secciones ordenadas: FWC primero, CC al final, el resto alfabético
   const sections = useMemo(() => {
     const keys = Object.keys(groupedStickers);
     return [
@@ -53,8 +49,6 @@ export default function AlbumView({
       ...keys.filter((k) => k === "CC"),
     ];
   }, [groupedStickers]);
-
-  // ─── Sincronizar con Supabase en background ───────────────────────────────
 
   async function syncUpsert(stickerId: string, quantity: number) {
     const supabase = createClient();
@@ -66,8 +60,6 @@ export default function AlbumView({
     await removeSticker(supabase, collectionId, stickerId);
   }
 
-  // ─── Agregar por código (QuickAddBar) ────────────────────────────────────
-
   const handleQuickAdd = useCallback(
     (code: string): "ok" | "not_found" | "already_max" => {
       const sticker = codeMap.get(code);
@@ -77,12 +69,8 @@ export default function AlbumView({
       const next = current + 1;
 
       setOwnedMap((prev) => new Map(prev).set(sticker.id, next));
-
-      // Flash del tile
       setFlashId(sticker.id);
       setTimeout(() => setFlashId(null), 600);
-
-      // Sync en background
       startTransition(() => { syncUpsert(sticker.id, next); });
 
       return "ok";
@@ -90,22 +78,17 @@ export default function AlbumView({
     [codeMap, ownedMap, collectionId],
   );
 
-  // ─── Tap en tile (ciclo: me falta → la tengo → repetida → me falta) ──────
-
   const handleTileClick = useCallback(
     (sticker: Sticker) => {
       const current = ownedMap.get(sticker.id) ?? 0;
 
       if (current === 0) {
-        // Me falta → la tengo
         setOwnedMap((prev) => new Map(prev).set(sticker.id, 1));
         startTransition(() => { syncUpsert(sticker.id, 1); });
       } else if (current === 1) {
-        // La tengo → repetida (1 extra)
         setOwnedMap((prev) => new Map(prev).set(sticker.id, 2));
         startTransition(() => { syncUpsert(sticker.id, 2); });
       } else {
-        // Repetida → me falta (eliminar)
         setOwnedMap((prev) => {
           const next = new Map(prev);
           next.delete(sticker.id);
@@ -116,8 +99,6 @@ export default function AlbumView({
     },
     [ownedMap, collectionId],
   );
-
-  // ─── Counts para filtros ──────────────────────────────────────────────────
 
   const allStickers = useMemo(
     () => Object.values(groupedStickers).flat(),
@@ -134,8 +115,6 @@ export default function AlbumView({
       repeated,
     };
   }, [ownedMap, allStickers]);
-
-  // ─── Filtrar stickers visibles ────────────────────────────────────────────
 
   function visibleStickers(stickers: Sticker[]): Sticker[] {
     if (filter === "all") return stickers;
@@ -154,7 +133,6 @@ export default function AlbumView({
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Glow */}
       <div
         aria-hidden
         className="pointer-events-none fixed inset-0 z-0"
@@ -164,61 +142,102 @@ export default function AlbumView({
         }}
       />
 
-      {/* Header fijo */}
-      <div className="sticky top-0 z-20 bg-background/95 backdrop-blur border-b border-border">
-        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-          <Link
-            href="/dashboard"
-            className="text-muted hover:text-foreground transition-colors text-sm flex items-center gap-1.5"
-          >
-            ← Dashboard
-          </Link>
-          <div className="text-center">
-            <p className="text-xs text-muted leading-none">{album.name}</p>
-            <p className="text-sm font-bold text-brand">{percentage}% completo</p>
-          </div>
-          <div className="text-right text-xs text-muted tabular-nums">
-            {counts.owned}/{allStickers.length}
-          </div>
-        </div>
+      {/* ── Cabecera no-sticky — respira bajo el AppHeader ──────────────────── */}
+      <div className="max-w-2xl mx-auto px-4 pt-20 pb-4">
+        <h1 className="text-2xl font-bold text-foreground">Mi álbum</h1>
+        <p className="text-sm text-muted mt-0.5">{album.name}</p>
+      </div>
 
-        {/* Barra de entrada rápida */}
-        <div className="max-w-2xl mx-auto px-4 pb-3">
+      {/* ── Sticky — pega justo bajo el AppHeader ────────────────────────── */}
+      <div className="sticky top-14 z-20 bg-background/95 backdrop-blur border-b border-border">
+        <div className="max-w-2xl mx-auto px-4 pt-2 pb-2">
           <QuickAddBar onAdd={handleQuickAdd} />
         </div>
-
-        {/* Filtros */}
         <div className="max-w-2xl mx-auto px-4 pb-3">
           <AlbumFilters active={filter} onChange={setFilter} counts={counts} />
         </div>
       </div>
 
-      {/* Contenido */}
-      <div className="relative z-10 max-w-2xl mx-auto px-4 py-6 flex flex-col gap-8">
-        {sections.map((section) => {
-          const stickers = visibleStickers(groupedStickers[section] ?? []);
-          if (stickers.length === 0) return null;
-          return (
-            <StickerSection
-              key={section}
-              section={section}
-              stickers={stickers}
-              ownedMap={ownedMap}
-              flashId={flashId}
-              onTileClick={handleTileClick}
-            />
-          );
-        })}
+      {/* ── Contenido ─────────────────────────────────────────────────────── */}
+      <div className="relative z-10 max-w-2xl mx-auto px-4 pb-28">
 
-        {/* Estado vacío cuando el filtro no tiene resultados */}
-        {sections.every(
-          (s) => visibleStickers(groupedStickers[s] ?? []).length === 0,
-        ) && (
-          <div className="text-center py-20 text-muted">
-            <p className="text-4xl mb-3">🎴</p>
-            <p className="text-sm">No hay barajitas en este filtro</p>
+        {/* Tarjeta de stats — no sticky, aparece al tope del scroll */}
+        <div className="mt-5 mb-8 rounded-2xl bg-surface border border-border p-5">
+          {/* Porcentaje grande + nombre del álbum */}
+          <div className="flex items-end justify-between mb-3">
+            <div>
+              <p className="text-xs text-muted mb-0.5">{album.name}</p>
+              <p className="text-4xl font-black text-brand leading-none">
+                {percentage}
+                <span className="text-2xl">%</span>
+              </p>
+              <p className="text-xs text-muted mt-1">completado</p>
+            </div>
+            <div className="text-right">
+              <p className="text-2xl font-bold text-foreground tabular-nums">
+                {counts.owned}
+              </p>
+              <p className="text-xs text-muted">de {allStickers.length}</p>
+            </div>
           </div>
-        )}
+
+          {/* Barra de progreso */}
+          <div className="w-full h-2 rounded-full bg-surface-subtle overflow-hidden">
+            <div
+              className="h-full rounded-full bg-brand transition-all duration-500"
+              style={{ width: `${percentage}%` }}
+            />
+          </div>
+
+          {/* Stats secundarios */}
+          <div className="grid grid-cols-3 gap-2 mt-4">
+            <div className="text-center p-2 rounded-xl bg-surface-subtle">
+              <p className="text-base font-bold text-brand tabular-nums">
+                {counts.owned}
+              </p>
+              <p className="text-[10px] text-muted mt-0.5">tengo</p>
+            </div>
+            <div className="text-center p-2 rounded-xl bg-surface-subtle">
+              <p className="text-base font-bold text-foreground tabular-nums">
+                {counts.missing}
+              </p>
+              <p className="text-[10px] text-muted mt-0.5">me faltan</p>
+            </div>
+            <div className="text-center p-2 rounded-xl bg-surface-subtle">
+              <p className="text-base font-bold text-amber-400 tabular-nums">
+                {counts.repeated}
+              </p>
+              <p className="text-[10px] text-muted mt-0.5">repetidas</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Secciones de barajitas */}
+        <div className="flex flex-col gap-8">
+          {sections.map((section) => {
+            const stickers = visibleStickers(groupedStickers[section] ?? []);
+            if (stickers.length === 0) return null;
+            return (
+              <StickerSection
+                key={section}
+                section={section}
+                stickers={stickers}
+                ownedMap={ownedMap}
+                flashId={flashId}
+                onTileClick={handleTileClick}
+              />
+            );
+          })}
+
+          {sections.every(
+            (s) => visibleStickers(groupedStickers[s] ?? []).length === 0,
+          ) && (
+            <div className="text-center py-20 text-muted">
+              <p className="text-4xl mb-3">🎴</p>
+              <p className="text-sm">No hay barajitas en este filtro</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

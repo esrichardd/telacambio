@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { Profile, TradingStatus } from "@/types/app";
 import { createClient } from "@/lib/supabase/client";
 import { updateProfile } from "@/lib/db/profiles";
@@ -51,6 +52,9 @@ export default function ProfileSettingsForm({
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [usernameError, setUsernameError] = useState<string | null>(null);
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  const router = useRouter();
 
   // ── Handlers para cada sección ───────────────────────────────────────────
   function handleUsernameChange(
@@ -84,6 +88,15 @@ export default function ProfileSettingsForm({
     if (field === "trading_status") setTradingStatus(value as TradingStatus);
     else if (field === "whatsapp_number") setWhatsappNumber(value as string);
     else if (field === "show_whatsapp") setShowWhatsapp(value as boolean);
+  }
+
+  // ── Cerrar sesión ────────────────────────────────────────────────────────
+  async function handleLogout() {
+    setLoggingOut(true);
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/login");
+    router.refresh();
   }
 
   // ── Guardar ──────────────────────────────────────────────────────────────
@@ -126,21 +139,11 @@ export default function ProfileSettingsForm({
   return (
     <div className="flex flex-col gap-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <Link
-            href="/dashboard"
-            className="text-sm text-muted hover:text-foreground transition-colors"
-          >
-            ← Dashboard
-          </Link>
-          <h1 className="text-xl font-bold text-foreground mt-2">
-            Configuración
-          </h1>
-          <p className="text-sm text-muted mt-0.5">
-            Actualiza tu información de perfil.
-          </p>
-        </div>
+      <div>
+        <h1 className="text-xl font-bold text-foreground">Configuración</h1>
+        <p className="text-sm text-muted mt-0.5">
+          Actualiza tu información de perfil.
+        </p>
       </div>
 
       {/* Sección: Tu perfil */}
@@ -215,6 +218,18 @@ export default function ProfileSettingsForm({
           telacambio.com/@{profile.username}
         </Link>
       </p>
+
+      {/* Cerrar sesión */}
+      <div className="pt-2 border-t border-border">
+        <button
+          type="button"
+          onClick={handleLogout}
+          disabled={loggingOut}
+          className="w-full py-3 rounded-full border border-border text-muted text-sm font-medium hover:text-foreground hover:border-foreground/30 transition-colors disabled:opacity-50"
+        >
+          {loggingOut ? "Cerrando sesión…" : "Cerrar sesión"}
+        </button>
+      </div>
     </div>
   );
 }

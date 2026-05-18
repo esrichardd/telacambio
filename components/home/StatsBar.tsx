@@ -1,5 +1,5 @@
 const stats = [
-  { value: "630", label: "barajitas en el álbum" },
+  { value: "993", label: "barajitas en el álbum" },
   { value: "48", label: "selecciones del mundo" },
   { value: "3", label: "países sede" },
 ];

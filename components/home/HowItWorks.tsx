@@ -2,7 +2,7 @@ const steps = [
   {
     n: "1",
     title: "Crea tu perfil",
-    desc: "Sin contraseña. Solo elige un username y listo.",
+    desc: "Regístrate con tu email, elige un username y cuéntanos tu ciudad.",
   },
   {
     n: "2",

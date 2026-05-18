@@ -18,7 +18,7 @@ export default function BottomCta() {
       </Link>
 
       <p className="mt-6 text-xs text-muted">
-        Sin registro de email. Sin contraseña. En 30 segundos estás listo.
+        Gratis. Solo necesitas un email. En menos de un minuto estás listo.
       </p>
     </section>
   );

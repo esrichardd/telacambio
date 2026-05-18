@@ -110,6 +110,7 @@ export default function ResetPasswordPage() {
           id="password"
           label="Nueva contraseña"
           type="password"
+          showToggle
           placeholder="Mínimo 6 caracteres"
           autoComplete="new-password"
           value={password}
@@ -125,6 +126,7 @@ export default function ResetPasswordPage() {
           id="confirmPassword"
           label="Confirmar contraseña"
           type="password"
+          showToggle
           placeholder="Repite tu contraseña"
           autoComplete="new-password"
           value={confirmPassword}

@@ -132,6 +132,7 @@ export default function LoginForm() {
             id="password"
             label=""
             type="password"
+            showToggle
             placeholder="Tu contraseña"
             autoComplete="current-password"
             value={password}

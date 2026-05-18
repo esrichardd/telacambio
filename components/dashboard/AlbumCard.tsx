@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Album } from "@/types/app";
 import type { CollectionSummary } from "@/types/app";
 
@@ -50,15 +51,15 @@ export default function AlbumCard({ album, summary }: AlbumCardProps) {
       </div>
 
       {/* CTA */}
-      <div
-        className="flex items-center justify-between px-4 py-3 rounded-xl border border-dashed border-border text-muted text-sm cursor-not-allowed select-none"
-        title="Próximamente"
+      <Link
+        href="/album"
+        className="flex items-center justify-between px-4 py-3 rounded-xl border border-brand/30 bg-brand/5 hover:bg-brand/10 transition-colors text-sm"
       >
-        <span>{isEmpty ? "Comenzar a registrar barajitas" : "Administrar mi álbum"}</span>
-        <span className="text-xs bg-surface-subtle border border-border px-2 py-0.5 rounded-full">
-          Próximamente
+        <span className="text-foreground font-medium">
+          {isEmpty ? "Comenzar a registrar barajitas" : "Ver mi álbum"}
         </span>
-      </div>
+        <span className="text-brand text-xs font-semibold">Abrir →</span>
+      </Link>
     </div>
   );
 }

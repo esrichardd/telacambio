@@ -122,6 +122,7 @@ export default function RegisterPage() {
           id="password"
           label="Contraseña"
           type="password"
+          showToggle
           placeholder="Mínimo 6 caracteres"
           autoComplete="new-password"
           value={password}
@@ -137,6 +138,7 @@ export default function RegisterPage() {
           id="confirmPassword"
           label="Confirmar contraseña"
           type="password"
+          showToggle
           placeholder="Repite tu contraseña"
           autoComplete="new-password"
           value={confirmPassword}

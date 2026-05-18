@@ -4,7 +4,7 @@
 
 App para coleccionistas de barajitas Panini del Mundial 2026. Los usuarios registran su colección, marcan cuáles tienen y cuáles les faltan, y coordinan intercambios con otros coleccionistas cercanos.
 
-**Estado actual:** En desarrollo activo. Auth completo, onboarding listo, dashboard listo (MVP). Vista del álbum pendiente.
+**Estado actual:** En desarrollo activo. Auth completo, onboarding listo, dashboard listo (MVP), vista del álbum lista.
 
 ---
 
@@ -45,11 +45,12 @@ app/                        # App Router de Next.js
   auth/callback/route.ts    # Route Handler PKCE — maneja code y token_hash
   onboarding/page.tsx       # Server Component — redirige si ya completó onboarding
   dashboard/page.tsx        # Dashboard MVP: header, álbum, stats, panel trading
+  album/page.tsx            # Server Component — carga álbum, stickers agrupados, colección
 
 components/
   auth/                     # Componentes reutilizables de autenticación
     AuthCard.tsx            # Wrapper full-page con glow y brand
-    AuthInput.tsx           # Input con label, error, hint (forwardRef)
+    AuthInput.tsx           # Input con label, error, hint, showToggle (forwardRef)
     AuthSelect.tsx          # Select con mismo estilo que AuthInput
     AuthButton.tsx          # primary (verde) y ghost (outline), con loading spinner
     AuthAlert.tsx           # error | success | info
@@ -59,6 +60,12 @@ components/
     StepUsername.tsx        # Paso 1: username + display_name
     StepLocation.tsx        # Paso 2: departamento + ciudad (Colombia)
     StepTrading.tsx         # Paso 3: trading_status + whatsapp
+  album/
+    AlbumView.tsx           # Client Component principal — ownedMap, filtros, optimistic updates
+    StickerSection.tsx      # Sección por grupo (FWC, ARG, MEX…) con header y grid
+    StickerTile.tsx         # Tile individual: 3 estados (falta/tengo/repetida) + flash
+    AlbumFilters.tsx        # Filtros pill: all | owned | missing | repeated
+    QuickAddBar.tsx         # Barra de entrada rápida por código (ej: ARG5)
 
 lib/
   supabase/
@@ -187,7 +194,6 @@ Al completar: `completeOnboarding()` guarda en `profiles` y setea `onboarding_co
 
 - `/@[username]` — perfil público
 - `/@[username]/[album-slug]` — colección pública
-- Vista del álbum (grid de barajitas, marcar tengo/falta/repetida)
 - Sistema de intercambios
 - Grupos
 - Búsqueda de usuarios cercanos

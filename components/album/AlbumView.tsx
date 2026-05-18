@@ -9,6 +9,7 @@ import { normalizeStickerCode } from "@/lib/utils/sticker";
 import AlbumFilters, { type FilterState } from "./AlbumFilters";
 import StickerSection from "./StickerSection";
 import AddStickerModal from "./AddStickerModal";
+import { ALBUM_ORDER } from "@/lib/constants/album-order";
 
 // ---------------------------------------------------------------------------
 // Rangos de las sub-secciones FWC
@@ -98,58 +99,6 @@ export default function AlbumView({
   const [sectionSearch, setSectionSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [, startTransition] = useTransition();
-
-  // ── Orden oficial del álbum Panini Mundial 2026 ───────────────────────────
-  const ALBUM_ORDER = [
-    "MEX",
-    "RSA",
-    "KOR",
-    "CZE",
-    "CAN",
-    "BIH",
-    "QAT",
-    "SUI",
-    "BRA",
-    "MAR",
-    "HAI",
-    "SCO",
-    "USA",
-    "PAR",
-    "AUS",
-    "TUR",
-    "GER",
-    "CUW",
-    "CIV",
-    "ECU",
-    "NED",
-    "JPN",
-    "SWE",
-    "TUN",
-    "BEL",
-    "EGY",
-    "IRN",
-    "NZL",
-    "ESP",
-    "CPV",
-    "KSA",
-    "URU",
-    "FRA",
-    "SEN",
-    "IRQ",
-    "NOR",
-    "ARG",
-    "ALG",
-    "AUT",
-    "JOR",
-    "POR",
-    "COD",
-    "UZB",
-    "COL",
-    "ENG",
-    "CRO",
-    "GHA",
-    "PAN",
-  ];
 
   // ── Secciones en orden del álbum: FWC primero → selecciones → CC al final ─
   const allSections = useMemo(() => {

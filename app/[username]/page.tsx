@@ -12,7 +12,7 @@ import {
 import { getStickersByAlbumGrouped } from "@/lib/db/stickers";
 import ProfileHeader from "@/components/profile/ProfileHeader";
 import PotentialTrades from "@/components/profile/PotentialTrades";
-import AlbumView from "@/components/album/AlbumView";
+import ProfileStickers from "@/components/profile/ProfileStickers";
 
 interface Props {
   params: Promise<{ username: string }>;
@@ -172,14 +172,14 @@ export default async function PublicProfilePage({ params }: Props) {
           </div>
         )}
 
-        {/* Álbum en modo lectura */}
+        {/* Colección compacta: repetidas disponibles + le faltan */}
         {album && hasCollection && (
-          <AlbumView
-            album={album}
-            groupedStickers={groupedStickers}
-            initialOwned={ownerOwned}
-            readOnly
-          />
+          <div className="mt-6">
+            <ProfileStickers
+              groupedStickers={groupedStickers}
+              ownerOwned={ownerOwned}
+            />
+          </div>
         )}
 
         {/* Si no tiene colección registrada aún */}

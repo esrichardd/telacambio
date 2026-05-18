@@ -1,4 +1,5 @@
 import type { Sticker } from "@/types/app";
+import { sortSectionsByAlbumOrder } from "@/lib/constants/album-order";
 
 interface PotentialTradesProps {
   /** Barajitas que el dueño del perfil tiene repetidas y al visitante le faltan */
@@ -8,7 +9,7 @@ interface PotentialTradesProps {
   ownerUsername: string;
 }
 
-// Agrupa los stickers por sección para mostrarlos organizados
+// Groups stickers by section for compact display
 function groupBySection(stickers: Sticker[]): Record<string, Sticker[]> {
   return stickers.reduce(
     (acc, s) => {
@@ -22,7 +23,7 @@ function groupBySection(stickers: Sticker[]): Record<string, Sticker[]> {
 
 function StickerCodeList({ stickers }: { stickers: Sticker[] }) {
   const grouped = groupBySection(stickers);
-  const sections = Object.keys(grouped).sort();
+  const sections = sortSectionsByAlbumOrder(Object.keys(grouped));
 
   return (
     <div className="flex flex-col gap-2 mt-3">
@@ -36,7 +37,7 @@ function StickerCodeList({ stickers }: { stickers: Sticker[] }) {
               <span
                 key={s.id}
                 title={s.name ?? s.code}
-                className="px-1.5 py-0.5 rounded text-[11px] font-mono font-medium bg-surface border border-border text-foreground"
+                className="px-1.5 py-0.5 rounded text-[11px] font-mono font-medium bg-brand/8 border border-brand/20 text-brand"
               >
                 {s.number ?? s.code}
               </span>
@@ -55,14 +56,15 @@ export default function PotentialTrades({
 }: PotentialTradesProps) {
   const total = theyCanGive.length + youCanGive.length;
 
-  // Sin cruce: igual mostramos la sección con un mensaje
+  // No matches: show empty state
   if (total === 0) {
     return (
       <div className="max-w-2xl mx-auto px-4 pb-6">
         <div className="rounded-xl border border-border bg-surface p-5 text-center">
-          <p className="text-2xl mb-2">🤷</p>
-          <p className="text-sm font-medium text-foreground">Sin cambios potenciales</p>
-          <p className="text-xs text-muted mt-1">
+          <p className="text-sm font-medium text-foreground mb-1">
+            Sin cambios potenciales
+          </p>
+          <p className="text-xs text-muted">
             No hay cruces entre lo que les sobra y lo que les falta a cada uno.
           </p>
         </div>
@@ -71,25 +73,23 @@ export default function PotentialTrades({
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 pb-10">
+    <div className="max-w-2xl mx-auto px-4 pb-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h2 className="text-sm font-semibold text-foreground">
-            Cambios potenciales
-          </h2>
-          <p className="text-xs text-muted mt-0.5">
-            Cruces entre tu colección y la de @{ownerUsername}
-          </p>
-        </div>
-        <span className="px-3 py-1 rounded-full bg-brand/15 text-brand text-xs font-bold border border-brand/20">
-          {total} posible{total !== 1 ? "s" : ""}
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-sm font-medium text-foreground">
+          Podemos intercambiar
+        </span>
+        <span className="px-2 py-0.5 rounded-full bg-brand/15 border border-brand/25 text-brand text-xs font-semibold">
+          {total}
+        </span>
+        <span className="text-xs text-muted ml-auto">
+          basado en tu colección
         </span>
       </div>
 
-      <div className="grid sm:grid-cols-2 gap-4">
-        {/* Ellos te pueden dar */}
-        <div className="rounded-xl border border-brand/25 bg-brand/5 p-4">
+      <div className="grid sm:grid-cols-2 gap-3">
+        {/* They can give */}
+        <div className="rounded-xl border border-brand/20 bg-brand/5 p-4">
           <div className="flex items-center justify-between mb-1">
             <span className="text-xs font-semibold text-brand">
               @{ownerUsername} te puede dar
@@ -108,13 +108,13 @@ export default function PotentialTrades({
           )}
         </div>
 
-        {/* Tú les puedes dar */}
-        <div className="rounded-xl border border-amber-500/25 bg-amber-500/5 p-4">
+        {/* You can give */}
+        <div className="rounded-xl border border-brand/20 bg-brand/5 p-4">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-xs font-semibold text-amber-400">
+            <span className="text-xs font-semibold text-brand">
               Tú le puedes dar
             </span>
-            <span className="text-xs font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full">
+            <span className="text-xs font-bold text-brand bg-brand/10 px-2 py-0.5 rounded-full">
               {youCanGive.length}
             </span>
           </div>

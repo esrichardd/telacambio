@@ -90,6 +90,7 @@ export type OnboardingData = {
   show_whatsapp: boolean;
   city?: string;
   country_code?: string;
+  state_code?: string;
   trading_status: TradingStatus;
 };
 

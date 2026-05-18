@@ -34,8 +34,9 @@ interface LocalState {
   // Step 1
   username: string;
   display_name: string;
-  // Step 2 (departamento is UI-only, not saved to DB)
-  departamento: string;
+  // Step 2
+  country_code: string;
+  state_code: string;
   city: string;
   // Step 3
   trading_status: TradingStatus;
@@ -56,7 +57,8 @@ export default function OnboardingShell({ userId }: OnboardingShellProps) {
   const [form, setForm] = useState<LocalState>({
     username: "",
     display_name: "",
-    departamento: "",
+    country_code: "",
+    state_code: "",
     city: "",
     trading_status: "active",
     whatsapp_number: "",
@@ -77,9 +79,21 @@ export default function OnboardingShell({ userId }: OnboardingShellProps) {
     handleChange(field, value);
   }
 
-  function handleStep2Change(field: "departamento" | "city", value: string) {
-    if (field === "departamento") {
-      setForm((prev) => ({ ...prev, departamento: value, city: "" }));
+  function handleStep2Change(
+    field: "country_code" | "state_code" | "city",
+    value: string,
+  ) {
+    if (field === "country_code") {
+      // Cambio de país → resetear estado y ciudad en cascada
+      setForm((prev) => ({
+        ...prev,
+        country_code: value,
+        state_code: "",
+        city: "",
+      }));
+    } else if (field === "state_code") {
+      // Cambio de estado → resetear ciudad
+      setForm((prev) => ({ ...prev, state_code: value, city: "" }));
     } else {
       handleChange(field, value);
     }
@@ -155,7 +169,8 @@ export default function OnboardingShell({ userId }: OnboardingShellProps) {
       const onboardingData: OnboardingData = {
         username: form.username.toLowerCase().trim(),
         display_name: form.display_name.trim(),
-        country_code: "CO",
+        country_code: form.country_code || undefined,
+        state_code: form.state_code || undefined,
         city: form.city || undefined,
         trading_status: form.trading_status,
         whatsapp_number: form.whatsapp_number.trim() || undefined,
@@ -192,7 +207,8 @@ export default function OnboardingShell({ userId }: OnboardingShellProps) {
         )}
         {step === 2 && (
           <StepLocation
-            departamento={form.departamento}
+            countryCode={form.country_code}
+            stateCode={form.state_code}
             city={form.city}
             onChange={handleStep2Change}
           />

@@ -6,20 +6,10 @@ import { useRouter } from "next/navigation";
 import type { Profile, TradingStatus } from "@/types/app";
 import { createClient } from "@/lib/supabase/client";
 import { updateProfile } from "@/lib/db/profiles";
-import { COLOMBIA_DEPARTAMENTOS } from "@/lib/constants/colombia";
 import StepUsername from "@/components/onboarding/StepUsername";
 import StepLocation from "@/components/onboarding/StepLocation";
 import StepTrading from "@/components/onboarding/StepTrading";
 import AuthAlert from "@/components/auth/AuthAlert";
-
-// Deriva el departamento a partir de la ciudad guardada en DB
-function getDepartamentoFromCity(city: string | null): string {
-  if (!city) return "";
-  for (const dep of COLOMBIA_DEPARTAMENTOS) {
-    if (dep.ciudades.includes(city)) return dep.name;
-  }
-  return "";
-}
 
 interface ProfileSettingsFormProps {
   profile: Profile;
@@ -33,9 +23,9 @@ export default function ProfileSettingsForm({
   // ── Estado del formulario ────────────────────────────────────────────────
   const [username, setUsername] = useState(profile.username ?? "");
   const [displayName, setDisplayName] = useState(profile.display_name ?? "");
-  const [departamento, setDepartamento] = useState(
-    getDepartamentoFromCity(profile.city),
-  );
+  const [countryCode, setCountryCode] = useState(profile.country_code ?? "");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [stateCode, setStateCode] = useState((profile as any).state_code ?? "");
   const [city, setCity] = useState(profile.city ?? "");
   const [tradingStatus, setTradingStatus] = useState<TradingStatus>(
     profile.trading_status ?? "active",
@@ -68,13 +58,17 @@ export default function ProfileSettingsForm({
   }
 
   function handleLocationChange(
-    field: "departamento" | "city",
+    field: "country_code" | "state_code" | "city",
     value: string,
   ) {
     setSaved(false);
-    if (field === "departamento") {
-      setDepartamento(value);
-      setCity(""); // resetear ciudad al cambiar departamento
+    if (field === "country_code") {
+      setCountryCode(value);
+      setStateCode("");
+      setCity("");
+    } else if (field === "state_code") {
+      setStateCode(value);
+      setCity("");
     } else {
       setCity(value);
     }
@@ -116,8 +110,9 @@ export default function ProfileSettingsForm({
       await updateProfile(supabase, userId, {
         username,
         display_name: displayName || undefined,
+        country_code: countryCode || undefined,
+        state_code: stateCode || undefined,
         city: city || undefined,
-        country_code: city ? "CO" : undefined,
         trading_status: tradingStatus,
         whatsapp_number: whatsappNumber || undefined,
         show_whatsapp: showWhatsapp,
@@ -169,7 +164,8 @@ export default function ProfileSettingsForm({
         </h2>
         <div className="bg-surface border border-border rounded-2xl p-5">
           <StepLocation
-            departamento={departamento}
+            countryCode={countryCode}
+            stateCode={stateCode}
             city={city}
             onChange={handleLocationChange}
           />

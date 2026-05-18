@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Profile } from "@/types/app";
 import LogoutButton from "./LogoutButton";
 
@@ -55,6 +56,12 @@ export default function DashboardHeader({ profile }: DashboardHeaderProps) {
       {/* Acciones */}
       <div className="flex flex-col items-end gap-1">
         <LogoutButton />
+        <Link
+          href="/settings"
+          className="text-xs text-muted hover:text-foreground transition-colors"
+        >
+          Configuración
+        </Link>
       </div>
     </header>
   );

@@ -4,7 +4,7 @@
 
 App para coleccionistas de barajitas Panini del Mundial 2026. Los usuarios registran su colección, marcan cuáles tienen y cuáles les faltan, y coordinan intercambios con otros coleccionistas cercanos.
 
-**Estado actual:** En desarrollo activo. Auth completo, onboarding listo, dashboard listo (MVP), vista del álbum lista.
+**Estado actual:** En desarrollo activo. Auth completo, onboarding listo, dashboard listo (MVP), vista del álbum lista, perfil público listo.
 
 ---
 
@@ -46,6 +46,7 @@ app/                        # App Router de Next.js
   onboarding/page.tsx       # Server Component — redirige si ya completó onboarding
   dashboard/page.tsx        # Dashboard MVP: header, álbum, stats, panel trading
   album/page.tsx            # Server Component — carga álbum, stickers agrupados, colección
+  [username]/page.tsx       # Perfil público — Server Component, accesible sin login
 
 components/
   auth/                     # Componentes reutilizables de autenticación
@@ -66,6 +67,10 @@ components/
     StickerTile.tsx         # Tile individual: 3 estados (falta/tengo/repetida) + flash
     AlbumFilters.tsx        # Filtros pill: all | owned | missing | repeated
     QuickAddBar.tsx         # Barra de entrada rápida por código (ej: ARG5)
+  profile/
+    ProfileHeader.tsx       # Avatar, display_name, ciudad, badge trading, botón WhatsApp
+    PotentialTrades.tsx     # Cruce de colecciones: qué puede darte / qué puedes darle
+    ReadOnlyAlbumView.tsx   # Álbum en modo lectura — reutiliza StickerSection sin interacción
 
 lib/
   supabase/
@@ -161,7 +166,7 @@ Estilo general: dark mode, bordes `rounded-xl` / `rounded-2xl`, botones con `rou
 - **No usar `setState` síncronamente en el cuerpo de un `useEffect`** — React 19 lo marca como error. Derivar estados síncronos directamente en render.
 - **Tipos**: siempre de `@/types/app` (nunca importar de `database.ts` directamente en componentes).
 - **Paths**: alias `@/` apunta a la raíz del proyecto.
-- **Idioma**: toda la UI en español latinoamericano.
+- **Idioma**: toda la UI en español neutro (sin regionalismos).
 
 ---
 
@@ -192,8 +197,7 @@ Al completar: `completeOnboarding()` guarda en `profiles` y setea `onboarding_co
 
 ## Lo que falta construir
 
-- `/@[username]` — perfil público
-- `/@[username]/[album-slug]` — colección pública
+- `/@[username]/[album-slug]` — colección pública (el perfil actual muestra todo en una sola página)
 - Sistema de intercambios
 - Grupos
 - Búsqueda de usuarios cercanos

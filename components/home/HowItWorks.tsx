@@ -12,7 +12,7 @@ const steps = [
   {
     n: "3",
     title: "Busca y cambia",
-    desc: "Encuentra usuarios cerca tuyo y coordina el cambio por WhatsApp.",
+    desc: "Encuentra usuarios cerca de ti y coordina el cambio por WhatsApp.",
   },
 ];
 

@@ -18,7 +18,7 @@ export default function BottomCta() {
       </Link>
 
       <p className="mt-6 text-xs text-muted">
-        Gratis. Solo necesitas un email. En menos de un minuto estás listo.
+        Gratis. Solo necesitas un email. En menos de un minuto ya puedes empezar.
       </p>
     </section>
   );

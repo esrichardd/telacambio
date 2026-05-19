@@ -120,7 +120,11 @@ const NAV_ITEMS = [
   },
 ];
 
-export default function BottomNav() {
+interface BottomNavProps {
+  pendingTradesCount?: number;
+}
+
+export default function BottomNav({ pendingTradesCount = 0 }: BottomNavProps) {
   const pathname = usePathname();
 
   return (
@@ -128,6 +132,7 @@ export default function BottomNav() {
       <div className="max-w-lg mx-auto flex items-stretch">
         {NAV_ITEMS.map((item) => {
           const active = pathname === item.href;
+          const isIntercambios = item.href === "/intercambios";
           return (
             <Link
               key={item.href}
@@ -136,7 +141,14 @@ export default function BottomNav() {
                 active ? "text-brand" : "text-muted hover:text-foreground"
               }`}
             >
-              {item.icon(active)}
+              <span className="relative">
+                {item.icon(active)}
+                {isIntercambios && pendingTradesCount > 0 && (
+                  <span className="absolute -top-1 -right-1.5 min-w-[14px] h-[14px] rounded-full bg-red-500 text-white text-[8px] font-bold flex items-center justify-center px-0.5 leading-none">
+                    {pendingTradesCount > 9 ? "9+" : pendingTradesCount}
+                  </span>
+                )}
+              </span>
               <span
                 className={`text-[10px] font-medium leading-none ${active ? "text-brand" : "text-muted"}`}
               >

@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { createTrade } from "@/lib/db/trades";
+import { createTrade, acceptTrade, rejectTrade, cancelTrade } from "@/lib/db/trades";
 import type { TradeDirection } from "@/types/app";
 
 export type ProposeTradeInput = {
@@ -50,5 +50,69 @@ export async function proposeTradeAction(
     const msg =
       err instanceof Error ? err.message : "Error al enviar la propuesta.";
     return { success: false, error: msg };
+  }
+}
+
+export type TradeActionResult =
+  | { success: true }
+  | { success: false; error: string };
+
+/** Server Action: accepts a pending trade (receiver only). */
+export async function acceptTradeAction(
+  tradeId: string,
+): Promise<TradeActionResult> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "No autenticado." };
+    await acceptTrade(supabase, tradeId);
+    return { success: true };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Error al aceptar.",
+    };
+  }
+}
+
+/** Server Action: rejects a pending trade (receiver only). */
+export async function rejectTradeAction(
+  tradeId: string,
+): Promise<TradeActionResult> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "No autenticado." };
+    await rejectTrade(supabase, tradeId);
+    return { success: true };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Error al rechazar.",
+    };
+  }
+}
+
+/** Server Action: cancels a pending trade (proposer only). */
+export async function cancelTradeAction(
+  tradeId: string,
+): Promise<TradeActionResult> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "No autenticado." };
+    await cancelTrade(supabase, tradeId);
+    return { success: true };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Error al cancelar.",
+    };
   }
 }

@@ -34,7 +34,7 @@ export default async function SettingsPage() {
         }}
       />
 
-      <div className="relative z-10 max-w-lg mx-auto px-4 pt-20 pb-28">
+      <div className="relative z-10 max-w-2xl mx-auto px-4 pt-20 pb-28">
         <ProfileSettingsForm profile={profile} userId={user.id} />
       </div>
       <BottomNav />

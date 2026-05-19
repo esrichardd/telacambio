@@ -36,10 +36,12 @@ export default async function IntercambiosPage() {
     <>
       <AppHeader />
       <main className="pt-16 pb-24 min-h-screen">
-        <TradeHeader />
-        <div className="flex flex-col gap-4 mt-4">
-          <QRCard username={profile.username} />
-          <ProfileLinkCard username={profile.username} />
+        <div className="max-w-2xl mx-auto px-4">
+          <TradeHeader />
+          <div className="flex flex-col gap-4 mt-4">
+            <QRCard username={profile.username} />
+            <ProfileLinkCard username={profile.username} />
+          </div>
         </div>
       </main>
       <BottomNav pendingTradesCount={pendingCount} />

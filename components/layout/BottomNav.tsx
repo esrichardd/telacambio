@@ -129,7 +129,7 @@ export default function BottomNav({ pendingTradesCount = 0 }: BottomNavProps) {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-surface/95 backdrop-blur border-t border-border">
-      <div className="max-w-lg mx-auto flex items-stretch">
+      <div className="max-w-2xl mx-auto flex items-stretch">
         {NAV_ITEMS.map((item) => {
           const active = pathname === item.href;
           const isIntercambios = item.href === "/intercambios";

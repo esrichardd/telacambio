@@ -36,9 +36,14 @@ export default async function DashboardPage() {
     : null;
 
   // Resumen de la colección
-  const summary = collection && album
-    ? await getCollectionSummary(supabase, collection.id, album.total_stickers)
-    : null;
+  const summary =
+    collection && album
+      ? await getCollectionSummary(
+          supabase,
+          collection.id,
+          album.total_stickers,
+        )
+      : null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -53,15 +58,13 @@ export default async function DashboardPage() {
         }}
       />
 
-      <div className="relative z-10 max-w-lg mx-auto px-4 pt-20 pb-28">
+      <div className="relative z-10 max-w-2xl mx-auto px-4 pt-20 pb-28">
         {/* Header con avatar y nombre */}
         <DashboardHeader profile={profile} />
 
         <div className="flex flex-col gap-4">
           {/* Tarjeta del álbum con barra de progreso */}
-          {album && summary && (
-            <AlbumCard album={album} summary={summary} />
-          )}
+          {album && summary && <AlbumCard album={album} summary={summary} />}
 
           {/* Grid de estadísticas */}
           {summary && <StatsRow summary={summary} />}

@@ -1,28 +1,26 @@
 import { getCurrentProfile } from "@/lib/auth/get-current-profile";
 import { createClient } from "@/lib/supabase/server";
-import {
-  getReceivedTrades,
-  getSentTrades,
-  getPendingTradesCount,
-} from "@/lib/db/trades";
+import { getReceivedTrades, getSentTrades } from "@/lib/db/trades";
 import TradeHeader from "@/components/intercambios/TradeHeader";
 import QRCard from "@/components/intercambios/QRCard";
 import ProfileLinkCard from "@/components/intercambios/ProfileLinkCard";
 import TradesInboxSheet from "@/components/intercambios/TradesInboxSheet";
 
 export default async function IntercambiosPage() {
+  // getCurrentProfile is memoized — no extra DB hit if layout already called it.
+  // createClient is independent — both run in parallel.
+  const [{ user, profile }, supabase] = await Promise.all([
+    getCurrentProfile(),
+    createClient(),
+  ]);
 
-  // Memoized — layout already called this, so no extra network hit
-  const { user, profile } = await getCurrentProfile();
-
-  const supabase = await createClient();
-
-  // Fetch all trades data in parallel
-  const [receivedTrades, sentTrades, pendingCount] = await Promise.all([
+  // pendingCount is derived from receivedTrades.length — no extra DB round-trip needed.
+  const [receivedTrades, sentTrades] = await Promise.all([
     getReceivedTrades(supabase, user.id),
     getSentTrades(supabase, user.id),
-    getPendingTradesCount(supabase, user.id),
   ]);
+
+  const pendingCount = receivedTrades.length;
 
   return (
     <>

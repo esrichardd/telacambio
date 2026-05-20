@@ -118,6 +118,70 @@ const profile = await getCurrentProfile();
 
 ---
 
+## Skeletons y Suspense
+
+El patrón estándar para loading states en esta app combina React Suspense con variantes skeleton en los propios componentes. No usar `loading.tsx` de Next.js — el Suspense se declara manualmente en `page.tsx` para tener control granular.
+
+### Reglas
+
+- **Skeleton como variante del componente**: cada componente que necesite skeleton usa un discriminated union en sus props. Cuando `skeleton=true` hace un early return con placeholders, sin duplicar la estructura en un archivo separado.
+- **Componentes con hooks**: si el componente tiene hooks (`useState`, `useTransition`, etc.), el skeleton no puede ir en el mismo cuerpo de función (hooks no pueden venir después de un return condicional). Extraer la lógica a un componente interno (`ComponenteInner`) y el export default se convierte en el wrapper con el discriminated union.
+- **No pasar funciones como props desde Server Components**: si un componente en modo skeleton se usa en un Server Component, sus props en modo `skeleton=true` no deben requerir funciones. El discriminated union resuelve esto — `skeleton=true` solo acepta props serializables.
+- **Server Component para las queries lentas**: crear un `[Feature]Data.tsx` Server Component que contiene las queries lentas y renderiza el componente real. El `page.tsx` lo envuelve en `<Suspense fallback={<Componente skeleton />}>`.
+- **Split quirúrgico**: el Suspense solo envuelve lo que depende de queries lentas. Lo que se puede resolver con datos cacheados o memoizados (como `getCurrentProfile()`) se renderiza fuera del Suspense boundary, inmediatamente.
+
+### Estructura de archivos por feature
+
+```
+components/[feature]/
+  [Feature]Data.tsx       ← Server Component con queries lentas
+  [Feature]View.tsx       ← Client Component principal (usa skeleton variant internamente)
+  SubComponente.tsx       ← Componentes hijos con prop skeleton
+```
+
+### Ejemplo de discriminated union
+
+```tsx
+// Componente sin hooks — skeleton en el mismo cuerpo
+type Props = { skeleton: true } | { skeleton?: false; data: string };
+
+export default function Card(props: Props) {
+  if (props.skeleton) return <div className="animate-pulse ..." />;
+  return <div>{props.data}</div>;
+}
+
+// Componente con hooks — extraer a Inner
+function CardInner({ data }: { data: string }) {
+  const [open, setOpen] = useState(false);
+  // ...
+}
+
+export default function Card(props: Props) {
+  if (props.skeleton) return <div className="animate-pulse ..." />;
+  return <CardInner {...props} />;
+}
+```
+
+### Ejemplo de page.tsx con Suspense
+
+```tsx
+export default async function FeaturePage() {
+  // Queries rápidas (cacheadas o memoizadas) — fuera del Suspense
+  const { profile } = await getCurrentProfile();
+
+  return (
+    <>
+      <StaticShell username={profile.username} />
+      <Suspense fallback={<SlowComponent skeleton />}>
+        <SlowComponentData userId={profile.id} />
+      </Suspense>
+    </>
+  );
+}
+```
+
+---
+
 ## Base de datos — patrones de query
 
 - **Join en una sola query**: usar select anidado de PostgREST en vez de dos queries seriales. Ejemplo: `select("*, collection_stickers(sticker_id, quantity)")`.

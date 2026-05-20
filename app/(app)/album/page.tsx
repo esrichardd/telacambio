@@ -6,14 +6,15 @@ import { getCollectionWithStickers } from "@/lib/db/collections";
 import { getStickersByAlbumGroupedCached } from "@/lib/db/stickers";
 import AlbumView from "@/components/album/AlbumView";
 export default async function AlbumPage() {
+  // All three are independent — run in parallel to avoid serial waterfalls.
+  // getCurrentProfile is memoized (layout already called it, no extra DB hit).
+  // getActiveAlbumsCached is served from cross-request cache after first load.
+  const [{ user }, albums, supabase] = await Promise.all([
+    getCurrentProfile(),
+    getActiveAlbumsCached(),
+    createClient(),
+  ]);
 
-  // Memoized — layout already called this, so no extra network hit
-  const { user } = await getCurrentProfile();
-
-  const supabase = await createClient();
-
-  // Catalog data — served from cache after first request
-  const albums = await getActiveAlbumsCached();
   const album = albums[0];
   if (!album) redirect("/dashboard");
 

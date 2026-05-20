@@ -8,6 +8,7 @@ import { normalizeStickerCode } from "@/lib/utils/sticker";
 
 import AlbumFilters, { type FilterState } from "./AlbumFilters";
 import StickerSection from "./StickerSection";
+import StatsCard from "./StatsCard";
 import AddStickerModal from "./AddStickerModal";
 import { ALBUM_ORDER } from "@/lib/constants/album-order";
 
@@ -400,63 +401,14 @@ export default function AlbumView({
       {/* ── Contenido ─────────────────────────────────────────────────────── */}
       <div className="relative z-10 max-w-2xl mx-auto px-4 pb-28">
         {/* Tarjeta de stats */}
-        <div className="mt-5 mb-8 rounded-2xl bg-surface border border-border p-5">
-          <div className="flex items-end justify-between mb-3">
-            <div>
-              <p className="text-xs text-muted mb-0.5">{album.name}</p>
-              <p className="text-4xl font-black text-brand leading-none">
-                {percentage}
-                <span className="text-2xl">%</span>
-              </p>
-              <p className="text-xs text-muted mt-1">completado</p>
-            </div>
-            <div className="text-right">
-              <p className="text-2xl font-bold text-foreground tabular-nums">
-                {counts.owned}
-              </p>
-              <p className="text-xs text-muted">de {allStickers.length}</p>
-            </div>
-          </div>
-
-          <div className="w-full h-2 rounded-full bg-surface-subtle overflow-hidden">
-            <div
-              className="h-full rounded-full bg-brand transition-all duration-500"
-              style={{ width: `${percentage}%` }}
-            />
-          </div>
-
-          <div className="grid grid-cols-4 gap-2 mt-4">
-            <div className="text-center p-2 rounded-xl bg-surface-subtle">
-              <p className="text-base font-bold text-brand tabular-nums">
-                {counts.owned}
-              </p>
-              <p className="text-[10px] text-muted mt-0.5">tengo</p>
-            </div>
-            <div className="text-center p-2 rounded-xl bg-surface-subtle">
-              <p className="text-base font-bold text-foreground tabular-nums">
-                {counts.missing}
-              </p>
-              <p className="text-[10px] text-muted mt-0.5">me faltan</p>
-            </div>
-            <div className="text-center p-2 rounded-xl bg-surface-subtle">
-              <p className="text-base font-bold text-amber-400 tabular-nums">
-                {counts.repeated}
-              </p>
-              <p className="text-[10px] text-muted mt-0.5">repetidas</p>
-            </div>
-            <div className="text-center p-2 rounded-xl bg-yellow-500/10 border border-yellow-600/20">
-              <p className="text-base font-bold text-yellow-300 tabular-nums">
-                {specialsOwned}
-                <span className="text-[10px] font-normal text-yellow-600/70">
-                  /{specialStickers.length}
-                </span>
-              </p>
-              <p className="text-[10px] text-yellow-600/80 mt-0.5">
-                ✦ especiales
-              </p>
-            </div>
-          </div>
-        </div>
+        <StatsCard
+          albumName={album.name}
+          percentage={percentage}
+          counts={counts}
+          specialsOwned={specialsOwned}
+          specialStickersCount={specialStickers.length}
+          totalStickers={allStickers.length}
+        />
 
         {/* Secciones de barajitas */}
         <div

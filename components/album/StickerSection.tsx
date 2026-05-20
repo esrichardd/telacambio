@@ -82,25 +82,58 @@ const FWC_GROUP_LABELS: Record<string, string> = {
   FWC_HIS: "FWC",
 };
 
-interface StickerSectionProps {
-  section: string;
-  stickers: Sticker[];
-  ownedMap: Map<string, number>;
-  flashId: string | null;
-  isSpecialFn: (sticker: Sticker) => boolean;
-  onTileAdd: (sticker: Sticker) => void;
-  onTileRemove: (sticker: Sticker) => void;
-}
+type StickerSectionProps =
+  | { skeleton: true; skeletonTiles?: number }
+  | {
+      skeleton?: false;
+      section: string;
+      stickers: Sticker[];
+      ownedMap: Map<string, number>;
+      flashId: string | null;
+      isSpecialFn: (sticker: Sticker) => boolean;
+      onTileAdd: (sticker: Sticker) => void;
+      onTileRemove: (sticker: Sticker) => void;
+    };
 
-export default function StickerSection({
-  section,
-  stickers,
-  ownedMap,
-  flashId,
-  isSpecialFn,
-  onTileAdd,
-  onTileRemove,
-}: StickerSectionProps) {
+export default function StickerSection(props: StickerSectionProps) {
+  const skeletonTiles = props.skeleton ? (props.skeletonTiles ?? 14) : 14;
+  if (props.skeleton) {
+    return (
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="h-4 w-10 rounded bg-surface-subtle animate-pulse" />
+            <div className="h-3 w-1 rounded bg-surface-subtle animate-pulse" />
+            <div className="h-3 w-20 rounded bg-surface-subtle animate-pulse" />
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="h-3 w-8 rounded bg-surface-subtle animate-pulse" />
+            <div className="h-3.5 w-3.5 rounded bg-surface-subtle animate-pulse" />
+          </div>
+        </div>
+        <div className="grid grid-cols-5 gap-1.5 sm:grid-cols-8 md:grid-cols-10">
+          {Array.from({ length: skeletonTiles }).map((_, i) => (
+            <div
+              key={i}
+              className="aspect-square rounded-lg bg-surface-subtle animate-pulse"
+            />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  const {
+    section,
+    stickers,
+    ownedMap,
+    flashId,
+    isSpecialFn,
+    onTileAdd,
+    onTileRemove,
+  } = props;
+
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const [collapsed, setCollapsed] = useState(false);
 
   const meta = SECTION_META[section];
@@ -109,8 +142,6 @@ export default function StickerSection({
 
   // Para grupos FWC virtuales mostramos "FWC" como código corto
   const shortCode = FWC_GROUP_LABELS[section] ?? section;
-  const showShortCode = name !== section;
-
   const owned = stickers.filter((s) => (ownedMap.get(s.id) ?? 0) >= 1).length;
 
   return (

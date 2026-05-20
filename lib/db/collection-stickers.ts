@@ -14,6 +14,43 @@ type Client = SupabaseClient<Database>;
 type CollectionStickerWithSticker = CollectionSticker & { sticker: Sticker };
 
 /**
+ * Busca o crea la colección del usuario para un álbum Y retorna el resumen
+ * completo en un solo round-trip a Postgres (RPC get_or_create_dashboard_summary).
+ *
+ * Reemplaza la cascada serial:
+ *   getOrCreateCollection (~200ms) → getCollectionSummary (~190ms)
+ * con una sola llamada (~200ms).
+ */
+export async function getOrCreateDashboardSummary(
+  client: Client,
+  profileId: string,
+  albumId: string,
+): Promise<{ collectionId: string; summary: CollectionSummary }> {
+  const { data, error } = await client.rpc("get_or_create_dashboard_summary", {
+    p_profile_id: profileId,
+    p_album_id: albumId,
+  });
+
+  if (error) throw error;
+  if (!data || data.length === 0) {
+    throw new Error("get_or_create_dashboard_summary returned no rows.");
+  }
+
+  const row = data[0];
+  return {
+    collectionId: row.collection_id,
+    summary: {
+      total: row.total,
+      owned: row.owned,
+      missing: row.missing,
+      repeated: row.repeated,
+      available: row.available,
+      percentage: row.percentage,
+    },
+  };
+}
+
+/**
  * Calcula el resumen numérico de una colección (tengo, faltan, repetidas, etc.)
  * Hace una sola query y computa en JS — la colección tiene máx. 993 filas.
  */

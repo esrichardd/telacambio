@@ -68,30 +68,24 @@ function computeTradeMatches(
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function PublicProfilePage({ params }: Props) {
-  console.time("username:total"); // PERF-INSTRUMENT
   const { username } = await params;
   const supabase = await createClient();
 
   // [1+2] visitor auth + owner profile in parallel — no dependency between them
-  console.time("username:auth+profile"); // PERF-INSTRUMENT
   const [user, profile] = await Promise.all([
     getAuthUser(),
     getProfileByUsername(supabase, username),
   ]);
-  console.timeEnd("username:auth+profile"); // PERF-INSTRUMENT
   if (!profile) notFound();
 
   const isSelf = user?.id === profile.id;
 
   // [3] albums — catalog data, cache hit after first request
-  console.time("username:albums"); // PERF-INSTRUMENT
   const albums = await getActiveAlbumsCached();
-  console.timeEnd("username:albums"); // PERF-INSTRUMENT
   const album = albums[0] ?? null;
 
   // [4a+4b+4c] owner collection + visitor collection (if applicable) + grouped stickers — all in parallel
   // groupedStickers is a cache hit; visitor collection uses Promise.resolve(null) when not needed
-  console.time("username:collections+stickers"); // PERF-INSTRUMENT
   const [ownerCollection, visitorCollection, groupedStickers] = album
     ? await Promise.all([
         getCollection(supabase, profile.id, album.id),
@@ -101,19 +95,16 @@ export default async function PublicProfilePage({ params }: Props) {
         getStickersByAlbumGroupedCached(album.id),
       ])
     : [null, null, {} as Record<string, Sticker[]>];
-  console.timeEnd("username:collections+stickers"); // PERF-INSTRUMENT
 
   // [5a+5b] owner summary + owner stickers in parallel
   let summary = null;
   let ownerOwned: { sticker_id: string; quantity: number }[] = [];
 
   if (ownerCollection && album) {
-    console.time("username:owner-data"); // PERF-INSTRUMENT
     const [summaryData, rawOwned] = await Promise.all([
       getCollectionSummary(supabase, ownerCollection.id, album.total_stickers),
       getCollectionStickers(supabase, ownerCollection.id),
     ]);
-    console.timeEnd("username:owner-data"); // PERF-INSTRUMENT
     summary = summaryData;
     ownerOwned = rawOwned.map((s) => ({
       sticker_id: s.sticker_id,
@@ -130,12 +121,10 @@ export default async function PublicProfilePage({ params }: Props) {
     visitorCollection &&
     Object.keys(groupedStickers).length > 0
   ) {
-    console.time("username:visitor-stickers"); // PERF-INSTRUMENT
     const visitorOwned = await getCollectionStickers(
       supabase,
       visitorCollection.id,
     );
-    console.timeEnd("username:visitor-stickers"); // PERF-INSTRUMENT
     const allStickers = Object.values(groupedStickers).flat();
     tradeMatch = computeTradeMatches(
       allStickers,
@@ -153,7 +142,6 @@ export default async function PublicProfilePage({ params }: Props) {
     user && profile.show_whatsapp ? profile.whatsapp_number : null;
 
   const hasCollection = Object.keys(groupedStickers).length > 0;
-  console.timeEnd("username:total"); // PERF-INSTRUMENT
 
   return (
     <div className="min-h-screen bg-background">

@@ -9,29 +9,21 @@ import StatsRow from "@/components/dashboard/StatsRow";
 import TradingPanel from "@/components/dashboard/TradingPanel";
 
 export default async function DashboardPage() {
-  console.time("dashboard:total"); // PERF-INSTRUMENT
 
   // Memoized — layout already called this, so no extra network hit
-  console.time("dashboard:auth+profile"); // PERF-INSTRUMENT
   const { user, profile } = await getCurrentProfile();
-  console.timeEnd("dashboard:auth+profile"); // PERF-INSTRUMENT
 
   const supabase = await createClient();
 
   // Álbum activo — catalog data, served from cache after first request
-  console.time("dashboard:albums"); // PERF-INSTRUMENT
   const albums = await getActiveAlbumsCached();
-  console.timeEnd("dashboard:albums"); // PERF-INSTRUMENT
   const album = albums[0];
 
   // Single RPC replaces two serial queries:
   //   getOrCreateCollection (~200ms) → getCollectionSummary (~190ms)
-  console.time("dashboard:summary"); // PERF-INSTRUMENT
   const dashboardData = album
     ? await getOrCreateDashboardSummary(supabase, user.id, album.id)
     : null;
-  console.timeEnd("dashboard:summary"); // PERF-INSTRUMENT
-  console.timeEnd("dashboard:total"); // PERF-INSTRUMENT
 
   const summary = dashboardData?.summary ?? null;
 

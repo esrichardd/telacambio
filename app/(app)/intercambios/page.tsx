@@ -11,24 +11,18 @@ import ProfileLinkCard from "@/components/intercambios/ProfileLinkCard";
 import TradesInboxSheet from "@/components/intercambios/TradesInboxSheet";
 
 export default async function IntercambiosPage() {
-  console.time("intercambios:total"); // PERF-INSTRUMENT
 
   // Memoized — layout already called this, so no extra network hit
-  console.time("intercambios:auth+profile"); // PERF-INSTRUMENT
   const { user, profile } = await getCurrentProfile();
-  console.timeEnd("intercambios:auth+profile"); // PERF-INSTRUMENT
 
   const supabase = await createClient();
 
   // Fetch all trades data in parallel
-  console.time("intercambios:trades"); // PERF-INSTRUMENT
   const [receivedTrades, sentTrades, pendingCount] = await Promise.all([
     getReceivedTrades(supabase, user.id),
     getSentTrades(supabase, user.id),
     getPendingTradesCount(supabase, user.id),
   ]);
-  console.timeEnd("intercambios:trades"); // PERF-INSTRUMENT
-  console.timeEnd("intercambios:total"); // PERF-INSTRUMENT
 
   return (
     <>

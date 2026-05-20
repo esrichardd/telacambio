@@ -7,14 +7,10 @@ export const metadata: Metadata = {
 };
 
 export default async function SettingsPage() {
-  console.time("settings:total"); // PERF-INSTRUMENT
 
   // Memoized — layout already called this, so no extra network hit
-  console.time("settings:auth+profile"); // PERF-INSTRUMENT
   const { user, profile } = await getCurrentProfile();
-  console.timeEnd("settings:auth+profile"); // PERF-INSTRUMENT
 
-  console.timeEnd("settings:total"); // PERF-INSTRUMENT
 
   return (
     <div className="min-h-screen bg-background">

@@ -10,9 +10,7 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
-  console.time("layout:auth+profile"); // PERF-INSTRUMENT
   await getCurrentProfile();
-  console.timeEnd("layout:auth+profile"); // PERF-INSTRUMENT
 
   return (
     <>

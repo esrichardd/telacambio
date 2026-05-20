@@ -59,8 +59,17 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
+  // Lista positiva: el proxy solo corre donde es necesario.
+  // Rutas públicas (/[username], /, /forgot-password, etc.) quedan fuera
+  // y no pagan el costo de supabase.auth.getUser().
   matcher: [
-    // Excluye archivos estáticos y assets — el proxy solo corre en rutas de la app
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/dashboard/:path*",
+    "/album/:path*",
+    "/intercambios/:path*",
+    "/settings/:path*",
+    "/onboarding/:path*",
+    "/login",
+    "/register",
+    "/auth/callback",
   ],
 };

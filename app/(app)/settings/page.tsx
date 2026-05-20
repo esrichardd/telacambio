@@ -11,7 +11,6 @@ export default async function SettingsPage() {
   // Memoized — layout already called this, so no extra network hit
   const { user, profile } = await getCurrentProfile();
 
-
   return (
     <div className="min-h-screen bg-background">
       <div
@@ -24,7 +23,11 @@ export default async function SettingsPage() {
       />
 
       <div className="relative z-10 max-w-2xl mx-auto px-4 pt-20 pb-28">
-        <ProfileSettingsForm profile={profile} userId={user.id} />
+        <ProfileSettingsForm
+          profile={profile}
+          userId={user.id}
+          userEmail={user.email ?? ""}
+        />
       </div>
     </div>
   );

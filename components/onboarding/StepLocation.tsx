@@ -298,6 +298,28 @@ export default function StepLocation({
   // ---------------------------------------------------------------------------
   // Render
   // ---------------------------------------------------------------------------
+
+  // Show skeleton while the countries list is being fetched — avoids the
+  // flash of empty selects that later fill in with values.
+  if (loadingCountries) {
+    return (
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1.5">
+          <div className="h-4 w-12 bg-surface-subtle rounded-full animate-pulse" />
+          <div className="h-12 bg-surface-subtle rounded-xl animate-pulse" />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <div className="h-4 w-32 bg-surface-subtle rounded-full animate-pulse" />
+          <div className="h-12 bg-surface-subtle rounded-xl animate-pulse" />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <div className="h-4 w-16 bg-surface-subtle rounded-full animate-pulse" />
+          <div className="h-12 bg-surface-subtle rounded-xl animate-pulse" />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-4">
       {/* País */}

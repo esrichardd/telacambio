@@ -1,13 +1,32 @@
 import Link from "next/link";
-import type { Album } from "@/types/app";
-import type { CollectionSummary } from "@/types/app";
+import type { Album, CollectionSummary } from "@/types/app";
 
-interface AlbumCardProps {
-  album: Album;
-  summary: CollectionSummary;
-}
+type AlbumCardProps =
+  | { skeleton: true }
+  | { skeleton?: false; album: Album; summary: CollectionSummary };
 
-export default function AlbumCard({ album, summary }: AlbumCardProps) {
+export default function AlbumCard(props: AlbumCardProps) {
+  if (props.skeleton) {
+    return (
+      <div className="bg-surface border border-border rounded-2xl p-5 flex flex-col gap-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex flex-col gap-2">
+            <div className="h-3 w-16 bg-surface-subtle rounded-full animate-pulse" />
+            <div className="h-5 w-40 bg-surface-subtle rounded-full animate-pulse" />
+          </div>
+          <div className="h-9 w-14 bg-surface-subtle rounded-lg animate-pulse" />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <div className="h-2 bg-surface-subtle rounded-full animate-pulse" />
+          <div className="h-3 w-32 bg-surface-subtle rounded-full animate-pulse" />
+        </div>
+        <div className="h-11 bg-surface-subtle rounded-xl animate-pulse" />
+      </div>
+    );
+  }
+
+  const { album, summary } = props;
+
   const { owned, total, percentage } = summary;
   const isEmpty = owned === 0;
 

@@ -1,31 +1,17 @@
+import { Suspense } from "react";
 import { getCurrentProfile } from "@/lib/auth/get-current-profile";
-import { createClient } from "@/lib/supabase/server";
-import { getActiveAlbumsCached } from "@/lib/db/albums";
-import { getOrCreateDashboardSummary } from "@/lib/db/collection-stickers";
 
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import AlbumCard from "@/components/dashboard/AlbumCard";
 import StatsRow from "@/components/dashboard/StatsRow";
 import TradingPanel from "@/components/dashboard/TradingPanel";
+import DashboardData from "@/components/dashboard/DashboardData";
 
+// DashboardHeader and TradingPanel only need profile (memoized, ~0ms) and render
+// immediately. AlbumCard and StatsRow depend on the slow RPC — deferred via Suspense
+// so their skeletons stream while DashboardData resolves.
 export default async function DashboardPage() {
-
-  // Memoized — layout already called this, so no extra network hit
-  const { user, profile } = await getCurrentProfile();
-
-  const supabase = await createClient();
-
-  // Álbum activo — catalog data, served from cache after first request
-  const albums = await getActiveAlbumsCached();
-  const album = albums[0];
-
-  // Single RPC replaces two serial queries:
-  //   getOrCreateCollection (~200ms) → getCollectionSummary (~190ms)
-  const dashboardData = album
-    ? await getOrCreateDashboardSummary(supabase, user.id, album.id)
-    : null;
-
-  const summary = dashboardData?.summary ?? null;
+  const { profile } = await getCurrentProfile();
 
   return (
     <div className="min-h-screen bg-background">
@@ -44,13 +30,19 @@ export default async function DashboardPage() {
         <DashboardHeader profile={profile} />
 
         <div className="flex flex-col gap-4">
-          {/* Tarjeta del álbum con barra de progreso */}
-          {album && summary && <AlbumCard album={album} summary={summary} />}
+          {/* Tarjeta del álbum + grid de estadísticas — skeleton mientras carga el RPC */}
+          <Suspense
+            fallback={
+              <>
+                <AlbumCard skeleton />
+                <StatsRow skeleton />
+              </>
+            }
+          >
+            <DashboardData />
+          </Suspense>
 
-          {/* Grid de estadísticas */}
-          {summary && <StatsRow summary={summary} />}
-
-          {/* Panel de intercambios */}
+          {/* Panel de intercambios — no depende del RPC, renderiza inmediatamente */}
           <TradingPanel profile={profile} />
         </div>
       </div>

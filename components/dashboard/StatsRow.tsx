@@ -1,5 +1,9 @@
 import type { CollectionSummary } from "@/types/app";
 
+type StatsRowProps =
+  | { skeleton: true }
+  | { skeleton?: false; summary: CollectionSummary };
+
 interface StatCardProps {
   value: number;
   label: string;
@@ -19,11 +23,25 @@ function StatCard({ value, label, highlight }: StatCardProps) {
   );
 }
 
-interface StatsRowProps {
-  summary: CollectionSummary;
-}
+export default function StatsRow(props: StatsRowProps) {
+  if (props.skeleton) {
+    return (
+      <div className="grid grid-cols-2 gap-3">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div
+            key={i}
+            className="bg-surface border border-border rounded-xl px-4 py-3 flex flex-col gap-1.5"
+          >
+            <div className="h-7 w-16 bg-surface-subtle rounded-full animate-pulse" />
+            <div className="h-3 w-12 bg-surface-subtle rounded-full animate-pulse" />
+          </div>
+        ))}
+      </div>
+    );
+  }
 
-export default function StatsRow({ summary }: StatsRowProps) {
+  const { summary } = props;
+
   return (
     <div className="grid grid-cols-2 gap-3">
       <StatCard value={summary.owned} label="Tengo" highlight />

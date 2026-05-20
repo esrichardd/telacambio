@@ -65,6 +65,7 @@ export const config = {
   matcher: [
     "/dashboard/:path*",
     "/album/:path*",
+    "/estadisticas/:path*",
     "/intercambios/:path*",
     "/settings/:path*",
     "/onboarding/:path*",

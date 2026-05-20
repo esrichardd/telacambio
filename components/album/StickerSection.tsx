@@ -2,78 +2,8 @@
 
 import { useState } from "react";
 import type { Sticker } from "@/types/app";
+import { SECTION_META } from "@/lib/constants/section-names";
 import StickerTile from "./StickerTile";
-
-// ---------------------------------------------------------------------------
-// Metadatos de cada sección: nombre completo + bandera/emoji
-// ---------------------------------------------------------------------------
-const SECTION_META: Record<string, { name: string; flag: string }> = {
-  // FWC — 3 sub-secciones virtuales
-  FWC_ESP: { name: "Especiales", flag: "⭐" },
-  FWC_BAL: { name: "Balón y países", flag: "⚽" },
-  FWC_HIS: { name: "Historia", flag: "🏆" },
-
-  // Especial patrocinador
-  CC: { name: "Coca-Cola", flag: "🥤" },
-
-  // América del Norte y Central / Caribe
-  MEX: { name: "México", flag: "🇲🇽" },
-  USA: { name: "Estados Unidos", flag: "🇺🇸" },
-  CAN: { name: "Canadá", flag: "🇨🇦" },
-  CUW: { name: "Curazao", flag: "🇨🇼" },
-  HAI: { name: "Haití", flag: "🇭🇹" },
-  PAN: { name: "Panamá", flag: "🇵🇦" },
-
-  // América del Sur
-  ARG: { name: "Argentina", flag: "🇦🇷" },
-  BRA: { name: "Brasil", flag: "🇧🇷" },
-  COL: { name: "Colombia", flag: "🇨🇴" },
-  ECU: { name: "Ecuador", flag: "🇪🇨" },
-  PAR: { name: "Paraguay", flag: "🇵🇾" },
-  URU: { name: "Uruguay", flag: "🇺🇾" },
-
-  // Europa
-  AUT: { name: "Austria", flag: "🇦🇹" },
-  BEL: { name: "Bélgica", flag: "🇧🇪" },
-  BIH: { name: "Bosnia y Herz.", flag: "🇧🇦" },
-  CRO: { name: "Croacia", flag: "🇭🇷" },
-  CZE: { name: "Rep. Checa", flag: "🇨🇿" },
-  ENG: { name: "Inglaterra", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿" },
-  ESP: { name: "España", flag: "🇪🇸" },
-  FRA: { name: "Francia", flag: "🇫🇷" },
-  GER: { name: "Alemania", flag: "🇩🇪" },
-  NED: { name: "Países Bajos", flag: "🇳🇱" },
-  NOR: { name: "Noruega", flag: "🇳🇴" },
-  POR: { name: "Portugal", flag: "🇵🇹" },
-  SCO: { name: "Escocia", flag: "🏴󠁧󠁢󠁳󠁣󠁴󠁿" },
-  SUI: { name: "Suiza", flag: "🇨🇭" },
-  SWE: { name: "Suecia", flag: "🇸🇪" },
-  TUR: { name: "Turquía", flag: "🇹🇷" },
-
-  // África
-  ALG: { name: "Argelia", flag: "🇩🇿" },
-  CIV: { name: "Costa de Marfil", flag: "🇨🇮" },
-  COD: { name: "RD Congo", flag: "🇨🇩" },
-  CPV: { name: "Cabo Verde", flag: "🇨🇻" },
-  EGY: { name: "Egipto", flag: "🇪🇬" },
-  GHA: { name: "Ghana", flag: "🇬🇭" },
-  MAR: { name: "Marruecos", flag: "🇲🇦" },
-  RSA: { name: "Sudáfrica", flag: "🇿🇦" },
-  SEN: { name: "Senegal", flag: "🇸🇳" },
-  TUN: { name: "Túnez", flag: "🇹🇳" },
-
-  // Asia y Oceanía
-  AUS: { name: "Australia", flag: "🇦🇺" },
-  IRN: { name: "Irán", flag: "🇮🇷" },
-  IRQ: { name: "Irak", flag: "🇮🇶" },
-  JOR: { name: "Jordania", flag: "🇯🇴" },
-  JPN: { name: "Japón", flag: "🇯🇵" },
-  KOR: { name: "Corea del Sur", flag: "🇰🇷" },
-  KSA: { name: "Arabia Saudita", flag: "🇸🇦" },
-  NZL: { name: "Nueva Zelanda", flag: "🇳🇿" },
-  QAT: { name: "Catar", flag: "🇶🇦" },
-  UZB: { name: "Uzbekistán", flag: "🇺🇿" },
-};
 
 // Prefijo de sección legible para los grupos FWC virtuales
 const FWC_GROUP_LABELS: Record<string, string> = {

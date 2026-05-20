@@ -119,3 +119,36 @@ export type TradeWithDetails = Trade & {
   receiver: Pick<Profile, "id" | "username" | "display_name" | "avatar_url">;
   stickers: (TradeSticker & { sticker: Sticker })[];
 };
+
+// -----------------------------------------------------------------------------
+// Estadísticas de colección — resultado del RPC get_collection_stats
+// -----------------------------------------------------------------------------
+
+/** One repeated sticker entry returned by the RPC top_repeated JSONB array */
+export type TopRepeatedSticker = {
+  code: string;
+  name: string | null;
+  section: string;
+  quantity: number;
+};
+
+/** Progress for a single album section */
+export type SectionStat = {
+  section: string;
+  owned: number;
+  total: number;
+};
+
+/** Full stats payload for the /estadisticas page */
+export type CollectionStats = {
+  percentage: number;
+  owned: number;
+  missing: number;
+  available: number;        // units available to trade (sum of quantity - 1)
+  ownedSpecials: number;
+  totalSpecials: number;
+  daysCollecting: number;   // 0 if collection is empty
+  currentStreak: number;    // 0 if no activity today or yesterday
+  topRepeated: TopRepeatedSticker[];
+  sectionProgress: SectionStat[];
+};

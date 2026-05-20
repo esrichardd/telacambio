@@ -6,10 +6,7 @@ import { getAuthUser } from "@/lib/auth/get-auth-user";
 import { getProfileByUsername } from "@/lib/db/profiles";
 import { getActiveAlbumsCached } from "@/lib/db/albums";
 import { getCollection } from "@/lib/db/collections";
-import {
-  getCollectionSummary,
-  getCollectionStickers,
-} from "@/lib/db/collection-stickers";
+import { getCollectionStickers } from "@/lib/db/collection-stickers";
 import { getStickersByAlbumGroupedCached } from "@/lib/db/stickers";
 import ProfileHeader from "@/components/profile/ProfileHeader";
 import PotentialTrades from "@/components/profile/PotentialTrades";
@@ -71,21 +68,20 @@ export default async function PublicProfilePage({ params }: Props) {
   const { username } = await params;
   const supabase = await createClient();
 
-  // [1+2] visitor auth + owner profile in parallel — no dependency between them
-  const [user, profile] = await Promise.all([
+  // [1+2+3] visitor auth + owner profile + albums in parallel — all independent.
+  // getActiveAlbumsCached is a cache hit after first request — no reason to serialize it.
+  const [user, profile, albums] = await Promise.all([
     getAuthUser(),
     getProfileByUsername(supabase, username),
+    getActiveAlbumsCached(),
   ]);
   if (!profile) notFound();
 
   const isSelf = user?.id === profile.id;
-
-  // [3] albums — catalog data, cache hit after first request
-  const albums = await getActiveAlbumsCached();
   const album = albums[0] ?? null;
 
-  // [4a+4b+4c] owner collection + visitor collection (if applicable) + grouped stickers — all in parallel
-  // groupedStickers is a cache hit; visitor collection uses Promise.resolve(null) when not needed
+  // [4a+4b+4c] owner collection + visitor collection (if applicable) + grouped stickers — all in parallel.
+  // groupedStickers is a cache hit; visitor collection uses Promise.resolve(null) when not needed.
   const [ownerCollection, visitorCollection, groupedStickers] = album
     ? await Promise.all([
         getCollection(supabase, profile.id, album.id),
@@ -96,44 +92,67 @@ export default async function PublicProfilePage({ params }: Props) {
       ])
     : [null, null, {} as Record<string, Sticker[]>];
 
-  // [5a+5b] owner summary + owner stickers in parallel
-  let summary = null;
+  // [5a+5b] owner stickers + visitor stickers in parallel.
+  // Visitor stickers are fetched here instead of a separate serial step (old [6]).
+  // summary is derived from ownerOwned in JS — no extra DB round-trip needed.
   let ownerOwned: { sticker_id: string; quantity: number }[] = [];
+  let visitorOwned: { sticker_id: string; quantity: number }[] = [];
 
   if (ownerCollection && album) {
-    const [summaryData, rawOwned] = await Promise.all([
-      getCollectionSummary(supabase, ownerCollection.id, album.total_stickers),
+    const needsVisitorStickers =
+      user &&
+      !isSelf &&
+      visitorCollection &&
+      Object.keys(groupedStickers).length > 0;
+
+    const [rawOwned, rawVisitorOwned] = await Promise.all([
       getCollectionStickers(supabase, ownerCollection.id),
+      needsVisitorStickers
+        ? getCollectionStickers(supabase, visitorCollection!.id)
+        : Promise.resolve([]),
     ]);
-    summary = summaryData;
+
     ownerOwned = rawOwned.map((s) => ({
+      sticker_id: s.sticker_id,
+      quantity: s.quantity,
+    }));
+    visitorOwned = rawVisitorOwned.map((s) => ({
       sticker_id: s.sticker_id,
       quantity: s.quantity,
     }));
   }
 
-  // [6] visitor stickers — serial, depends on visitorCollection.id
+  // Derived from ownerOwned — same computation as getCollectionSummary without the DB round-trip.
+  const summary =
+    ownerCollection && album
+      ? {
+          total: album.total_stickers,
+          owned: ownerOwned.length,
+          missing: album.total_stickers - ownerOwned.length,
+          repeated: ownerOwned.filter((s) => s.quantity >= 2).length,
+          available: ownerOwned.reduce(
+            (sum, s) => sum + Math.max(0, s.quantity - 1),
+            0,
+          ),
+          percentage:
+            album.total_stickers > 0
+              ? Math.round((ownerOwned.length / album.total_stickers) * 100)
+              : 0,
+        }
+      : null;
+
+  // Trade matches computed from already-fetched data — no extra queries.
   let tradeMatch: TradeMatch | null = null;
 
   if (
     user &&
     !isSelf &&
+    ownerCollection &&
     visitorCollection &&
     Object.keys(groupedStickers).length > 0
   ) {
-    const visitorOwned = await getCollectionStickers(
-      supabase,
-      visitorCollection.id,
-    );
     const allStickers = Object.values(groupedStickers).flat();
-    tradeMatch = computeTradeMatches(
-      allStickers,
-      ownerOwned,
-      visitorOwned.map((s) => ({
-        sticker_id: s.sticker_id,
-        quantity: s.quantity,
-      })),
-    );
+    tradeMatch = computeTradeMatches(allStickers, ownerOwned, visitorOwned);
   }
 
   // El WhatsApp solo llega al cliente si el visitante está logueado

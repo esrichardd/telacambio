@@ -8,6 +8,7 @@ import { getActiveAlbumsCached } from "@/lib/db/albums";
 import { getCollection } from "@/lib/db/collections";
 import { getCollectionStickers } from "@/lib/db/collection-stickers";
 import { getStickersByAlbumGroupedCached } from "@/lib/db/stickers";
+import { isSpecialSticker } from "@/lib/utils/stickers";
 import ProfileHeader from "@/components/profile/ProfileHeader";
 import PotentialTrades from "@/components/profile/PotentialTrades";
 import ProfileStickers from "@/components/profile/ProfileStickers";
@@ -123,6 +124,12 @@ export default async function PublicProfilePage({ params }: Props) {
   }
 
   // Derived from ownerOwned — same computation as getCollectionSummary without the DB round-trip.
+  const allStickersFlat = Object.values(groupedStickers).flat();
+  const specialIds = new Set(
+    allStickersFlat.filter(isSpecialSticker).map((s) => s.id),
+  );
+  const ownerOwnedSet = new Set(ownerOwned.map((s) => s.sticker_id));
+
   const summary =
     ownerCollection && album
       ? {
@@ -138,6 +145,8 @@ export default async function PublicProfilePage({ params }: Props) {
             album.total_stickers > 0
               ? Math.round((ownerOwned.length / album.total_stickers) * 100)
               : 0,
+          ownedSpecials: [...specialIds].filter((id) => ownerOwnedSet.has(id))
+            .length,
         }
       : null;
 

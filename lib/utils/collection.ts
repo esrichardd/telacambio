@@ -31,5 +31,6 @@ export function computeSummary(
     repeated,
     available,
     percentage,
+    ownedSpecials: 0,
   };
 }

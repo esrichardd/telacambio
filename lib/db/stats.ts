@@ -31,8 +31,6 @@ export async function getCollectionStats(
   collectionId: string,
   albumId: string,
 ): Promise<CollectionStats> {
-  // @ts-expect-error — RPC not yet in generated types; remove after running
-  // `pnpm supabase gen types typescript --linked > types/database.ts`
   const { data, error } = (await client.rpc("get_collection_stats", {
     p_collection_id: collectionId,
     p_album_id: albumId,

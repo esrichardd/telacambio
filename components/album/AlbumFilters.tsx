@@ -1,8 +1,7 @@
-export type FilterState = "all" | "owned" | "missing" | "repeated";
+export type FilterState = "all" | "missing" | "repeated";
 
 const FILTERS: { value: FilterState; label: string }[] = [
   { value: "all", label: "Todas" },
-  { value: "owned", label: "Tengo" },
   { value: "missing", label: "Me faltan" },
   { value: "repeated", label: "Repetidas" },
 ];
@@ -19,7 +18,7 @@ export default function AlbumFilters({
   counts,
 }: AlbumFiltersProps) {
   return (
-    <div className="flex gap-1.5 overflow-x-auto pb-0.5 no-scrollbar">
+    <div className="flex justify-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar">
       {FILTERS.map(({ value, label }) => (
         <button
           key={value}

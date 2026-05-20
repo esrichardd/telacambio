@@ -8,17 +8,34 @@ interface StatCardProps {
   value: number;
   label: string;
   highlight?: boolean;
+  special?: boolean;
 }
 
-function StatCard({ value, label, highlight }: StatCardProps) {
+function StatCard({ value, label, highlight, special }: StatCardProps) {
   return (
-    <div className="bg-surface border border-border rounded-xl px-4 py-3 flex flex-col gap-0.5">
+    <div
+      className={`rounded-xl px-4 py-3 flex flex-col gap-0.5 border ${
+        special
+          ? "bg-yellow-500/10 border-yellow-600/20"
+          : "bg-surface border-border"
+      }`}
+    >
       <span
-        className={`text-2xl font-bold tabular-nums ${highlight ? "text-brand" : "text-foreground"}`}
+        className={`text-2xl font-bold tabular-nums ${
+          special
+            ? "text-yellow-300"
+            : highlight
+              ? "text-brand"
+              : "text-foreground"
+        }`}
       >
         {value.toLocaleString("es-CO")}
       </span>
-      <span className="text-xs text-muted">{label}</span>
+      <span
+        className={`text-xs ${special ? "text-yellow-600/80" : "text-muted"}`}
+      >
+        {label}
+      </span>
     </div>
   );
 }
@@ -46,7 +63,7 @@ export default function StatsRow(props: StatsRowProps) {
     <div className="grid grid-cols-2 gap-3">
       <StatCard value={summary.owned} label="Tengo" highlight />
       <StatCard value={summary.missing} label="Me faltan" />
-      <StatCard value={summary.repeated} label="Repetidas" />
+      <StatCard value={summary.ownedSpecials} label="✦ Especiales" special />
       <StatCard value={summary.available} label="Para cambio" />
     </div>
   );

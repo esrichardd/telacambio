@@ -6,6 +6,7 @@ type StatsCardProps =
       skeleton?: false;
       albumName: string;
       percentage: number;
+      ownedCount: number;
       counts: Record<FilterState, number>;
       specialsOwned: number;
       specialStickersCount: number;
@@ -48,6 +49,7 @@ export default function StatsCard(props: StatsCardProps) {
   const {
     albumName,
     percentage,
+    ownedCount,
     counts,
     specialsOwned,
     specialStickersCount,
@@ -67,7 +69,7 @@ export default function StatsCard(props: StatsCardProps) {
         </div>
         <div className="text-right">
           <p className="text-2xl font-bold text-foreground tabular-nums">
-            {counts.owned}
+            {ownedCount}
           </p>
           <p className="text-xs text-muted">de {totalStickers}</p>
         </div>
@@ -83,7 +85,7 @@ export default function StatsCard(props: StatsCardProps) {
       <div className="grid grid-cols-4 gap-2 mt-4">
         <div className="text-center p-2 rounded-xl bg-surface-subtle">
           <p className="text-base font-bold text-brand tabular-nums">
-            {counts.owned}
+            {ownedCount}
           </p>
           <p className="text-[10px] text-muted mt-0.5">tengo</p>
         </div>

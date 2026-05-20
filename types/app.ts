@@ -49,6 +49,7 @@ export type CollectionSummary = {
   repeated: number; // barajitas con quantity >= 2
   available: number; // unidades disponibles para cambio (sum de quantity-1)
   percentage: number; // owned / total * 100
+  ownedSpecials: number; // barajitas especiales que tiene (FWC o #1 de selección)
 };
 
 /** Perfil público con resumen de su colección activa */
@@ -144,11 +145,11 @@ export type CollectionStats = {
   percentage: number;
   owned: number;
   missing: number;
-  available: number;        // units available to trade (sum of quantity - 1)
+  available: number; // units available to trade (sum of quantity - 1)
   ownedSpecials: number;
   totalSpecials: number;
-  daysCollecting: number;   // 0 if collection is empty
-  currentStreak: number;    // 0 if no activity today or yesterday
+  daysCollecting: number; // 0 if collection is empty
+  currentStreak: number; // 0 if no activity today or yesterday
   topRepeated: TopRepeatedSticker[];
   sectionProgress: SectionStat[];
 };

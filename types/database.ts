@@ -545,6 +545,21 @@ export type Database = {
     }
     Functions: {
       accept_trade: { Args: { p_trade_id: string }; Returns: Json }
+      get_collection_stats: {
+        Args: { p_album_id: string; p_collection_id: string }
+        Returns: {
+          available: number
+          current_streak: number
+          days_collecting: number
+          missing: number
+          owned: number
+          owned_specials: number
+          percentage: number
+          section_progress: Json
+          top_repeated: Json
+          total_specials: number
+        }[]
+      }
       get_or_create_dashboard_summary: {
         Args: { p_album_id: string; p_profile_id: string }
         Returns: {
@@ -552,6 +567,7 @@ export type Database = {
           collection_id: string
           missing: number
           owned: number
+          owned_specials: number
           percentage: number
           repeated: number
           total: number

@@ -5,6 +5,7 @@ import type { Album, Sticker } from "@/types/app";
 import { createClient } from "@/lib/supabase/client";
 import { upsertSticker, removeSticker } from "@/lib/db/collection-stickers";
 import { normalizeStickerCode } from "@/lib/utils/sticker";
+import { isSpecialSticker } from "@/lib/utils/stickers";
 
 import AlbumFilters, { type FilterState } from "./AlbumFilters";
 import StickerSection from "./StickerSection";
@@ -22,17 +23,6 @@ const FWC_GROUPS = {
 } as const;
 
 type FwcGroupKey = keyof typeof FWC_GROUPS;
-
-// ---------------------------------------------------------------------------
-// Detecta si una barajita es "especial":
-//   - Todas las FWC (section === "FWC")
-//   - La #1 de cada selección (number === 1, excluyendo FWC y CC)
-// ---------------------------------------------------------------------------
-function isSpecialSticker(sticker: Sticker): boolean {
-  if (sticker.section === "FWC") return true;
-  if (sticker.section === "CC") return false;
-  return sticker.number === 1;
-}
 
 interface AlbumViewProps {
   album: Album;
@@ -200,16 +190,20 @@ export default function AlbumView({
     [allStickers],
   );
 
+  // ownedCount se mantiene separado de los counts de filtro — lo usan StatsCard y percentage
+  const ownedCount = useMemo(
+    () => [...ownedMap.values()].filter((q) => q >= 1).length,
+    [ownedMap],
+  );
+
   const counts = useMemo<Record<FilterState, number>>(() => {
-    const owned = [...ownedMap.values()].filter((q) => q >= 1).length;
     const repeated = [...ownedMap.values()].filter((q) => q >= 2).length;
     return {
       all: allStickers.length,
-      owned,
-      missing: allStickers.length - owned,
+      missing: allStickers.length - ownedCount,
       repeated,
     };
-  }, [ownedMap, allStickers]);
+  }, [ownedMap, allStickers, ownedCount]);
 
   const specialsOwned = useMemo(
     () => specialStickers.filter((s) => (ownedMap.get(s.id) ?? 0) >= 1).length,
@@ -221,7 +215,6 @@ export default function AlbumView({
     if (filter === "all") return stickers;
     return stickers.filter((s) => {
       const q = ownedMap.get(s.id) ?? 0;
-      if (filter === "owned") return q >= 1;
       if (filter === "missing") return q === 0;
       if (filter === "repeated") return q >= 2;
       return true;
@@ -295,7 +288,7 @@ export default function AlbumView({
 
   const percentage =
     allStickers.length > 0
-      ? Math.round((counts.owned / allStickers.length) * 100)
+      ? Math.round((ownedCount / allStickers.length) * 100)
       : 0;
 
   const noResults = sections.every(
@@ -404,6 +397,7 @@ export default function AlbumView({
         <StatsCard
           albumName={album.name}
           percentage={percentage}
+          ownedCount={ownedCount}
           counts={counts}
           specialsOwned={specialsOwned}
           specialStickersCount={specialStickers.length}

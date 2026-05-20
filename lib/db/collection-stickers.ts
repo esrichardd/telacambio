@@ -46,6 +46,7 @@ export async function getOrCreateDashboardSummary(
       repeated: row.repeated,
       available: row.available,
       percentage: row.percentage,
+      ownedSpecials: row.owned_specials,
     },
   };
 }
@@ -69,11 +70,25 @@ export async function getCollectionSummary(
   const rows = data as { quantity: number }[];
   const owned = rows.length;
   const repeated = rows.filter((r) => r.quantity >= 2).length;
-  const available = rows.reduce((sum, r) => sum + Math.max(0, r.quantity - 1), 0);
+  const available = rows.reduce(
+    (sum, r) => sum + Math.max(0, r.quantity - 1),
+    0,
+  );
   const missing = totalStickers - owned;
-  const percentage = totalStickers > 0 ? Math.round((owned / totalStickers) * 100) : 0;
+  const percentage =
+    totalStickers > 0 ? Math.round((owned / totalStickers) * 100) : 0;
 
-  return { total: totalStickers, owned, missing, repeated, available, percentage };
+  // ownedSpecials is not computed here (no sticker metadata available);
+  // callers that need it should use getOrCreateDashboardSummary instead.
+  return {
+    total: totalStickers,
+    owned,
+    missing,
+    repeated,
+    available,
+    percentage,
+    ownedSpecials: 0,
+  };
 }
 
 /**

@@ -275,7 +275,8 @@ function EmptySent() {
         Ninguna propuesta enviada
       </p>
       <p className="text-xs text-muted leading-relaxed">
-        Visita el perfil de otro coleccionista y toca "Proponer intercambio".
+        Visita el perfil de otro coleccionista y toca &quot;Proponer
+        intercambio&quot;.
       </p>
     </div>
   );
@@ -283,11 +284,9 @@ function EmptySent() {
 
 // ─── Main component ────────────────────────────────────────────────────────────
 
-export default function TradesInboxSheet({
-  receivedTrades,
-  sentTrades,
-  pendingCount,
-}: Props) {
+// Inner component holds all hooks — necessary because hooks cannot come after
+// a conditional return, so the skeleton check lives in the outer wrapper.
+function TradesInboxSheetInner({ receivedTrades, sentTrades }: Props) {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<Tab>("received");
   const [localReceived, setLocalReceived] = useState(receivedTrades);
@@ -497,4 +496,24 @@ export default function TradesInboxSheet({
       </div>
     </>
   );
+}
+
+// ─── Public export — skeleton wrapper ─────────────────────────────────────────
+
+type TradesInboxSheetProps =
+  | { skeleton: true }
+  | (Props & { skeleton?: false });
+
+export default function TradesInboxSheet(props: TradesInboxSheetProps) {
+  if (props.skeleton) {
+    return (
+      <div
+        className="fixed bottom-20 right-4 z-30
+          w-14 h-14 rounded-full bg-surface border border-border
+          flex items-center justify-center animate-pulse"
+        aria-hidden
+      />
+    );
+  }
+  return <TradesInboxSheetInner {...props} />;
 }

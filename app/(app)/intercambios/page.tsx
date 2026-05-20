@@ -1,26 +1,16 @@
+import { Suspense } from "react";
 import { getCurrentProfile } from "@/lib/auth/get-current-profile";
-import { createClient } from "@/lib/supabase/server";
-import { getReceivedTrades, getSentTrades } from "@/lib/db/trades";
 import TradeHeader from "@/components/intercambios/TradeHeader";
 import QRCard from "@/components/intercambios/QRCard";
 import ProfileLinkCard from "@/components/intercambios/ProfileLinkCard";
 import TradesInboxSheet from "@/components/intercambios/TradesInboxSheet";
+import IntercambiosData from "@/components/intercambios/IntercambiosData";
 
 export default async function IntercambiosPage() {
-  // getCurrentProfile is memoized — no extra DB hit if layout already called it.
-  // createClient is independent — both run in parallel.
-  const [{ user, profile }, supabase] = await Promise.all([
-    getCurrentProfile(),
-    createClient(),
-  ]);
-
-  // pendingCount is derived from receivedTrades.length — no extra DB round-trip needed.
-  const [receivedTrades, sentTrades] = await Promise.all([
-    getReceivedTrades(supabase, user.id),
-    getSentTrades(supabase, user.id),
-  ]);
-
-  const pendingCount = receivedTrades.length;
+  // getCurrentProfile is memoized — layout already called it, no extra DB hit.
+  // QRCard and ProfileLinkCard only need the username, so the page shell
+  // renders immediately. Only the trades queries are deferred via Suspense.
+  const { user, profile } = await getCurrentProfile();
 
   return (
     <>
@@ -33,11 +23,11 @@ export default async function IntercambiosPage() {
           </div>
         </div>
       </main>
-      <TradesInboxSheet
-        receivedTrades={receivedTrades}
-        sentTrades={sentTrades}
-        pendingCount={pendingCount}
-      />
+
+      {/* Skeleton FAB appears immediately — replaced by the real sheet when trades load */}
+      <Suspense fallback={<TradesInboxSheet skeleton />}>
+        <IntercambiosData userId={user.id} />
+      </Suspense>
     </>
   );
 }

@@ -20,7 +20,7 @@ export default function ChangePasswordButton({
       const supabase = createClient();
       const { error: supabaseError } =
         await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/auth/callback?next=/settings`,
+          redirectTo: `${window.location.origin}/auth/callback?type=recovery`,
         });
       if (supabaseError) {
         setError("No se pudo enviar el enlace. Intenta de nuevo.");

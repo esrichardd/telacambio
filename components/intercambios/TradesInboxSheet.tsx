@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import type { TradeWithDetails, TradeStatus } from "@/types/app";
 import {
   acceptTradeAction,
@@ -289,7 +288,6 @@ export default function TradesInboxSheet({
   sentTrades,
   pendingCount,
 }: Props) {
-  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<Tab>("received");
   const [localReceived, setLocalReceived] = useState(receivedTrades);
@@ -297,17 +295,16 @@ export default function TradesInboxSheet({
   const [actionError, setActionError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  const pendingReceived = localReceived.filter((t) => t.status === "pending").length;
+  const pendingReceived = localReceived.filter(
+    (t) => t.status === "pending",
+  ).length;
 
   function handleClose() {
     setOpen(false);
     setActionError(null);
   }
 
-  function handleAction(
-    id: string,
-    action: "accept" | "reject" | "cancel",
-  ) {
+  function handleAction(id: string, action: "accept" | "reject" | "cancel") {
     setActionError(null);
 
     startTransition(async () => {
@@ -321,23 +318,26 @@ export default function TradesInboxSheet({
         return;
       }
 
-      // Optimistically update local state
+      // Optimistic update — server already revalidated via revalidatePath
       if (action === "accept") {
         setLocalReceived((prev) =>
-          prev.map((t) => (t.id === id ? { ...t, status: "accepted" as const } : t)),
+          prev.map((t) =>
+            t.id === id ? { ...t, status: "accepted" as const } : t,
+          ),
         );
       } else if (action === "reject") {
         setLocalReceived((prev) =>
-          prev.map((t) => (t.id === id ? { ...t, status: "rejected" as const } : t)),
+          prev.map((t) =>
+            t.id === id ? { ...t, status: "rejected" as const } : t,
+          ),
         );
       } else {
         setLocalSent((prev) =>
-          prev.map((t) => (t.id === id ? { ...t, status: "cancelled" as const } : t)),
+          prev.map((t) =>
+            t.id === id ? { ...t, status: "cancelled" as const } : t,
+          ),
         );
       }
-
-      // Sync server state in background
-      router.refresh();
     });
   }
 
@@ -377,10 +377,7 @@ export default function TradesInboxSheet({
 
       {/* Backdrop */}
       {open && (
-        <div
-          className="fixed inset-0 z-40 bg-black/60"
-          onClick={handleClose}
-        />
+        <div className="fixed inset-0 z-40 bg-black/60" onClick={handleClose} />
       )}
 
       {/* Bottom sheet */}

@@ -1,6 +1,8 @@
+import { unstable_cache } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, TablesUpdate } from "@/types/database";
 import type { Profile, OnboardingData } from "@/types/app";
+import { createPublicClient } from "@/lib/supabase/public";
 
 type Client = SupabaseClient<Database>;
 
@@ -51,6 +53,37 @@ export async function getProfileById(
     throw error;
   }
   return data;
+}
+
+/**
+ * Versión cacheada de getProfileById.
+ * El perfil cambia solo cuando el usuario guarda settings — en ese momento
+ * se invalida llamando invalidateProfileCache(userId) desde lib/cache/invalidate.ts.
+ * Revalidación automática cada 5 minutos como red de seguridad.
+ *
+ * Usa createPublicClient() internamente porque unstable_cache no puede
+ * aceptar un cliente con cookies (request-scoped).
+ * El perfil es legible por la anon key (no filtra por is_public aquí).
+ */
+export function getProfileByIdCached(userId: string): Promise<Profile | null> {
+  return unstable_cache(
+    async (): Promise<Profile | null> => {
+      const supabase = createPublicClient();
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
+        .single();
+
+      if (error) {
+        if (error.code === "PGRST116") return null;
+        throw error;
+      }
+      return data;
+    },
+    [`profile:${userId}`],
+    { tags: [`profile:${userId}`], revalidate: 300 },
+  )();
 }
 
 /**

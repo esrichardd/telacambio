@@ -1,7 +1,9 @@
+import { unstable_cache } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database";
 import type { Sticker } from "@/types/app";
 import { normalizeStickerCode } from "@/lib/utils/sticker";
+import { createPublicClient } from "@/lib/supabase/public";
 
 type Client = SupabaseClient<Database>;
 
@@ -39,6 +41,46 @@ export async function getStickersByAlbumGrouped(
     },
     {} as Record<string, Sticker[]>,
   );
+}
+
+/**
+ * Cached version of getStickersByAlbumGrouped.
+ * Sticker catalog per album is stable — only changes on admin edits.
+ * Persists across requests for 1 hour. Call invalidateStickersCache(albumId)
+ * from admin actions that mutate the stickers table.
+ *
+ * Factory function: receives albumId so each album gets its own cache key.
+ * Creates its own Supabase client internally.
+ */
+export function getStickersByAlbumGroupedCached(
+  albumId: string,
+): Promise<Record<string, Sticker[]>> {
+  const cached = unstable_cache(
+    async (): Promise<Record<string, Sticker[]>> => {
+      const supabase = createPublicClient();
+      const { data, error } = await supabase
+        .from("stickers")
+        .select("*")
+        .eq("album_id", albumId)
+        .order("section")
+        .order("number");
+
+      if (error) throw error;
+
+      return data.reduce(
+        (acc, sticker) => {
+          if (!acc[sticker.section]) acc[sticker.section] = [];
+          acc[sticker.section].push(sticker);
+          return acc;
+        },
+        {} as Record<string, Sticker[]>,
+      );
+    },
+    [`stickers:album:${albumId}`],
+    { tags: [`stickers:album:${albumId}`], revalidate: 3600 },
+  );
+
+  return cached();
 }
 
 /**

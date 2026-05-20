@@ -7,6 +7,9 @@ import { updateSession } from "@/lib/supabase/proxy";
  * 1. Refrescar el token de sesión de Supabase
  * 2. Redirigir al login si el usuario intenta entrar a rutas privadas sin sesión
  * 3. Redirigir al dashboard si el usuario autenticado intenta entrar al login
+ * 4. Inyectar x-user-id en los request headers para que las páginas no
+ *    necesiten llamar a supabase.auth.getUser() de nuevo (~350ms ahorrados
+ *    por navegación — la validación del JWT ya ocurrió en updateSession).
  */
 export async function proxy(request: NextRequest) {
   const { supabaseResponse, user } = await updateSession(request);
@@ -32,7 +35,27 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  return supabaseResponse;
+  // Construir request headers con x-user-id inyectado.
+  // Stripear primero el header entrante para evitar spoofing: un cliente
+  // malicioso no puede hacerse pasar por otro usuario enviando x-user-id.
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.delete("x-user-id");
+  if (user) {
+    requestHeaders.set("x-user-id", user.id);
+  }
+
+  // Nueva response que pasa los headers modificados a la page.
+  // Los Server Components los leen via headers() de next/headers.
+  const response = NextResponse.next({
+    request: { headers: requestHeaders },
+  });
+
+  // Copiar cookies de sesión que Supabase pudo haber refrescado
+  supabaseResponse.cookies.getAll().forEach((cookie) => {
+    response.cookies.set(cookie.name, cookie.value, cookie);
+  });
+
+  return response;
 }
 
 export const config = {

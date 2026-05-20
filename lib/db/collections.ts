@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, TablesInsert } from "@/types/database";
-import type { Collection } from "@/types/app";
+import type { Collection, CollectionSticker } from "@/types/app";
 
 type Client = SupabaseClient<Database>;
 
@@ -59,6 +59,47 @@ export async function getOrCreateCollection(
   const existing = await getCollection(client, profileId, albumId);
   if (existing) return existing;
   return createCollection(client, profileId, albumId);
+}
+
+/**
+ * Busca la colección de un usuario para un álbum e incluye sus stickers en un
+ * solo round-trip (SELECT con join via PostgREST).
+ * Si la colección no existe (primera visita), la crea y retorna stickers vacíos.
+ *
+ * Reemplaza el patrón getOrCreateCollection() → getCollectionStickers() que
+ * requería dos queries seriales.
+ */
+export async function getCollectionWithStickers(
+  client: Client,
+  profileId: string,
+  albumId: string,
+): Promise<{
+  collection: Collection;
+  stickers: Pick<CollectionSticker, "sticker_id" | "quantity">[];
+}> {
+  const { data, error } = await client
+    .from("collections")
+    .select("*, collection_stickers(sticker_id, quantity)")
+    .eq("profile_id", profileId)
+    .eq("album_id", albumId)
+    .maybeSingle();
+
+  if (error) throw error;
+
+  if (data) {
+    const { collection_stickers, ...collection } = data;
+    return {
+      collection: collection as Collection,
+      stickers: (collection_stickers ?? []) as Pick<
+        CollectionSticker,
+        "sticker_id" | "quantity"
+      >[],
+    };
+  }
+
+  // Primera visita: la colección no existe todavía — crearla y retornar vacía
+  const newCollection = await createCollection(client, profileId, albumId);
+  return { collection: newCollection, stickers: [] };
 }
 
 /** Busca una colección por su ID. */

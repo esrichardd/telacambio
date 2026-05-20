@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createTrade, acceptTrade, rejectTrade, cancelTrade } from "@/lib/db/trades";
 import type { TradeDirection } from "@/types/app";
@@ -45,6 +46,7 @@ export async function proposeTradeAction(
       message: input.message,
     });
 
+    revalidatePath("/intercambios");
     return { success: true, tradeId: trade.id };
   } catch (err) {
     const msg =
@@ -68,6 +70,7 @@ export async function acceptTradeAction(
     } = await supabase.auth.getUser();
     if (!user) return { success: false, error: "No autenticado." };
     await acceptTrade(supabase, tradeId);
+    revalidatePath("/intercambios");
     return { success: true };
   } catch (err) {
     return {
@@ -88,6 +91,7 @@ export async function rejectTradeAction(
     } = await supabase.auth.getUser();
     if (!user) return { success: false, error: "No autenticado." };
     await rejectTrade(supabase, tradeId);
+    revalidatePath("/intercambios");
     return { success: true };
   } catch (err) {
     return {
@@ -108,6 +112,7 @@ export async function cancelTradeAction(
     } = await supabase.auth.getUser();
     if (!user) return { success: false, error: "No autenticado." };
     await cancelTrade(supabase, tradeId);
+    revalidatePath("/intercambios");
     return { success: true };
   } catch (err) {
     return {

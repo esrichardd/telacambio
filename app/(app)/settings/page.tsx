@@ -1,30 +1,23 @@
-import { redirect } from "next/navigation";
 import type { Metadata } from "next";
-import { createClient } from "@/lib/supabase/server";
-import { getProfileById } from "@/lib/db/profiles";
+import { getCurrentProfile } from "@/lib/auth/get-current-profile";
 import ProfileSettingsForm from "@/components/settings/ProfileSettingsForm";
-import BottomNav from "@/components/layout/BottomNav";
-import AppHeader from "@/components/layout/AppHeader";
 
 export const metadata: Metadata = {
   title: "Configuración · TeLaCambio",
 };
 
 export default async function SettingsPage() {
-  const supabase = await createClient();
+  console.time("settings:total"); // PERF-INSTRUMENT
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Memoized — layout already called this, so no extra network hit
+  console.time("settings:auth+profile"); // PERF-INSTRUMENT
+  const { user, profile } = await getCurrentProfile();
+  console.timeEnd("settings:auth+profile"); // PERF-INSTRUMENT
 
-  if (!user) redirect("/login");
-
-  const profile = await getProfileById(supabase, user.id);
-  if (!profile) redirect("/login");
+  console.timeEnd("settings:total"); // PERF-INSTRUMENT
 
   return (
     <div className="min-h-screen bg-background">
-      <AppHeader />
       <div
         aria-hidden
         className="pointer-events-none fixed inset-0 z-0"
@@ -37,7 +30,6 @@ export default async function SettingsPage() {
       <div className="relative z-10 max-w-2xl mx-auto px-4 pt-20 pb-28">
         <ProfileSettingsForm profile={profile} userId={user.id} />
       </div>
-      <BottomNav />
     </div>
   );
 }

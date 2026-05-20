@@ -1,7 +1,6 @@
-import { redirect } from "next/navigation";
+import { getCurrentProfile } from "@/lib/auth/get-current-profile";
 import { createClient } from "@/lib/supabase/server";
-import { getProfileById } from "@/lib/db/profiles";
-import { getActiveAlbums } from "@/lib/db/albums";
+import { getActiveAlbumsCached } from "@/lib/db/albums";
 import { getOrCreateCollection } from "@/lib/db/collections";
 import { getCollectionSummary } from "@/lib/db/collection-stickers";
 
@@ -9,33 +8,31 @@ import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import AlbumCard from "@/components/dashboard/AlbumCard";
 import StatsRow from "@/components/dashboard/StatsRow";
 import TradingPanel from "@/components/dashboard/TradingPanel";
-import BottomNav from "@/components/layout/BottomNav";
-import AppHeader from "@/components/layout/AppHeader";
-
 export default async function DashboardPage() {
+  console.time("dashboard:total"); // PERF-INSTRUMENT
+
+  // Memoized — layout already called this, so no extra network hit
+  console.time("dashboard:auth+profile"); // PERF-INSTRUMENT
+  const { user, profile } = await getCurrentProfile();
+  console.timeEnd("dashboard:auth+profile"); // PERF-INSTRUMENT
+
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) redirect("/login");
-
-  const profile = await getProfileById(supabase, user.id);
-
-  if (!profile) redirect("/login");
-  if (!profile.onboarding_completed) redirect("/onboarding");
-
-  // Álbum activo — por ahora solo existe Mundial 2026
-  const albums = await getActiveAlbums(supabase);
+  // Álbum activo — catalog data, served from cache after first request
+  console.time("dashboard:albums"); // PERF-INSTRUMENT
+  const albums = await getActiveAlbumsCached();
+  console.timeEnd("dashboard:albums"); // PERF-INSTRUMENT
   const album = albums[0];
 
   // Colección del usuario para ese álbum (se crea si no existe)
+  console.time("dashboard:collection"); // PERF-INSTRUMENT
   const collection = album
     ? await getOrCreateCollection(supabase, user.id, album.id)
     : null;
+  console.timeEnd("dashboard:collection"); // PERF-INSTRUMENT
 
   // Resumen de la colección
+  console.time("dashboard:summary"); // PERF-INSTRUMENT
   const summary =
     collection && album
       ? await getCollectionSummary(
@@ -44,10 +41,11 @@ export default async function DashboardPage() {
           album.total_stickers,
         )
       : null;
+  console.timeEnd("dashboard:summary"); // PERF-INSTRUMENT
+  console.timeEnd("dashboard:total"); // PERF-INSTRUMENT
 
   return (
     <div className="min-h-screen bg-background">
-      <AppHeader />
       {/* Glow de fondo sutil */}
       <div
         aria-hidden
@@ -73,7 +71,6 @@ export default async function DashboardPage() {
           <TradingPanel profile={profile} />
         </div>
       </div>
-      <BottomNav />
     </div>
   );
 }

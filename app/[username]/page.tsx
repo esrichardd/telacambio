@@ -2,14 +2,15 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import type { Sticker } from "@/types/app";
 import { createClient } from "@/lib/supabase/server";
+import { getAuthUser } from "@/lib/auth/get-auth-user";
 import { getProfileByUsername } from "@/lib/db/profiles";
-import { getActiveAlbums } from "@/lib/db/albums";
+import { getActiveAlbumsCached } from "@/lib/db/albums";
 import { getCollection } from "@/lib/db/collections";
 import {
   getCollectionSummary,
   getCollectionStickers,
 } from "@/lib/db/collection-stickers";
-import { getStickersByAlbumGrouped } from "@/lib/db/stickers";
+import { getStickersByAlbumGroupedCached } from "@/lib/db/stickers";
 import ProfileHeader from "@/components/profile/ProfileHeader";
 import PotentialTrades from "@/components/profile/PotentialTrades";
 import ProfileStickers from "@/components/profile/ProfileStickers";
@@ -67,71 +68,83 @@ function computeTradeMatches(
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function PublicProfilePage({ params }: Props) {
+  console.time("username:total"); // PERF-INSTRUMENT
   const { username } = await params;
   const supabase = await createClient();
 
-  // Sesión del visitante (no redirige si no hay sesión)
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  // Perfil del dueño de la página
-  const profile = await getProfileByUsername(supabase, username);
+  // [1+2] visitor auth + owner profile in parallel — no dependency between them
+  console.time("username:auth+profile"); // PERF-INSTRUMENT
+  const [user, profile] = await Promise.all([
+    getAuthUser(),
+    getProfileByUsername(supabase, username),
+  ]);
+  console.timeEnd("username:auth+profile"); // PERF-INSTRUMENT
   if (!profile) notFound();
 
-  // Evitar que alguien vea cambios potenciales contra sí mismo
   const isSelf = user?.id === profile.id;
 
-  // Álbum activo (Mundial 2026)
-  const albums = await getActiveAlbums(supabase);
+  // [3] albums — catalog data, cache hit after first request
+  console.time("username:albums"); // PERF-INSTRUMENT
+  const albums = await getActiveAlbumsCached();
+  console.timeEnd("username:albums"); // PERF-INSTRUMENT
   const album = albums[0] ?? null;
 
-  // ── Colección del dueño ──────────────────────────────────────────────────
+  // [4a+4b+4c] owner collection + visitor collection (if applicable) + grouped stickers — all in parallel
+  // groupedStickers is a cache hit; visitor collection uses Promise.resolve(null) when not needed
+  console.time("username:collections+stickers"); // PERF-INSTRUMENT
+  const [ownerCollection, visitorCollection, groupedStickers] = album
+    ? await Promise.all([
+        getCollection(supabase, profile.id, album.id),
+        user && !isSelf
+          ? getCollection(supabase, user.id, album.id)
+          : Promise.resolve(null),
+        getStickersByAlbumGroupedCached(album.id),
+      ])
+    : [null, null, {} as Record<string, Sticker[]>];
+  console.timeEnd("username:collections+stickers"); // PERF-INSTRUMENT
+
+  // [5a+5b] owner summary + owner stickers in parallel
   let summary = null;
-  let groupedStickers: Record<string, Sticker[]> = {};
   let ownerOwned: { sticker_id: string; quantity: number }[] = [];
 
-  if (album) {
-    const ownerCollection = await getCollection(supabase, profile.id, album.id);
-    if (ownerCollection) {
-      const [summaryData, rawOwned, grouped] = await Promise.all([
-        getCollectionSummary(
-          supabase,
-          ownerCollection.id,
-          album.total_stickers,
-        ),
-        getCollectionStickers(supabase, ownerCollection.id),
-        getStickersByAlbumGrouped(supabase, album.id),
-      ]);
-      summary = summaryData;
-      ownerOwned = rawOwned.map((s) => ({
-        sticker_id: s.sticker_id,
-        quantity: s.quantity,
-      }));
-      groupedStickers = grouped;
-    }
+  if (ownerCollection && album) {
+    console.time("username:owner-data"); // PERF-INSTRUMENT
+    const [summaryData, rawOwned] = await Promise.all([
+      getCollectionSummary(supabase, ownerCollection.id, album.total_stickers),
+      getCollectionStickers(supabase, ownerCollection.id),
+    ]);
+    console.timeEnd("username:owner-data"); // PERF-INSTRUMENT
+    summary = summaryData;
+    ownerOwned = rawOwned.map((s) => ({
+      sticker_id: s.sticker_id,
+      quantity: s.quantity,
+    }));
   }
 
-  // ── Colección del visitante (solo si está logueado y no es el dueño) ──────
+  // [6] visitor stickers — serial, depends on visitorCollection.id
   let tradeMatch: TradeMatch | null = null;
 
-  if (user && !isSelf && album && Object.keys(groupedStickers).length > 0) {
-    const visitorCollection = await getCollection(supabase, user.id, album.id);
-    if (visitorCollection) {
-      const visitorOwned = await getCollectionStickers(
-        supabase,
-        visitorCollection.id,
-      );
-      const allStickers = Object.values(groupedStickers).flat();
-      tradeMatch = computeTradeMatches(
-        allStickers,
-        ownerOwned,
-        visitorOwned.map((s) => ({
-          sticker_id: s.sticker_id,
-          quantity: s.quantity,
-        })),
-      );
-    }
+  if (
+    user &&
+    !isSelf &&
+    visitorCollection &&
+    Object.keys(groupedStickers).length > 0
+  ) {
+    console.time("username:visitor-stickers"); // PERF-INSTRUMENT
+    const visitorOwned = await getCollectionStickers(
+      supabase,
+      visitorCollection.id,
+    );
+    console.timeEnd("username:visitor-stickers"); // PERF-INSTRUMENT
+    const allStickers = Object.values(groupedStickers).flat();
+    tradeMatch = computeTradeMatches(
+      allStickers,
+      ownerOwned,
+      visitorOwned.map((s) => ({
+        sticker_id: s.sticker_id,
+        quantity: s.quantity,
+      })),
+    );
   }
 
   // El WhatsApp solo llega al cliente si el visitante está logueado
@@ -140,6 +153,7 @@ export default async function PublicProfilePage({ params }: Props) {
     user && profile.show_whatsapp ? profile.whatsapp_number : null;
 
   const hasCollection = Object.keys(groupedStickers).length > 0;
+  console.timeEnd("username:total"); // PERF-INSTRUMENT
 
   return (
     <div className="min-h-screen bg-background">

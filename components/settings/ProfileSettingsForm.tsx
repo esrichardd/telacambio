@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import type { Profile, TradingStatus } from "@/types/app";
 import { createClient } from "@/lib/supabase/client";
 import { updateProfile } from "@/lib/db/profiles";
+import { logoutAction } from "@/app/actions/auth";
+import { invalidateProfileCache } from "@/lib/cache/invalidate";
 import StepUsername from "@/components/onboarding/StepUsername";
 import StepLocation from "@/components/onboarding/StepLocation";
 import StepTrading from "@/components/onboarding/StepTrading";
@@ -42,9 +43,7 @@ export default function ProfileSettingsForm({
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [usernameError, setUsernameError] = useState<string | null>(null);
-  const [loggingOut, setLoggingOut] = useState(false);
-
-  const router = useRouter();
+  const [isLoggingOut, startLogoutTransition] = useTransition();
 
   // ── Handlers para cada sección ───────────────────────────────────────────
   function handleUsernameChange(
@@ -85,12 +84,10 @@ export default function ProfileSettingsForm({
   }
 
   // ── Cerrar sesión ────────────────────────────────────────────────────────
-  async function handleLogout() {
-    setLoggingOut(true);
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push("/login");
-    router.refresh();
+  function handleLogout() {
+    startLogoutTransition(async () => {
+      await logoutAction();
+    });
   }
 
   // ── Guardar ──────────────────────────────────────────────────────────────
@@ -117,6 +114,9 @@ export default function ProfileSettingsForm({
         whatsapp_number: whatsappNumber || undefined,
         show_whatsapp: showWhatsapp,
       });
+      // Invalidar el cache del perfil para que las demás páginas
+      // reciban los datos actualizados en la próxima navegación
+      await invalidateProfileCache(userId);
       setSaved(true);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Error desconocido";
@@ -220,10 +220,10 @@ export default function ProfileSettingsForm({
         <button
           type="button"
           onClick={handleLogout}
-          disabled={loggingOut}
+          disabled={isLoggingOut}
           className="w-full py-3 rounded-full border border-border text-muted text-sm font-medium hover:text-foreground hover:border-foreground/30 transition-colors disabled:opacity-50"
         >
-          {loggingOut ? "Cerrando sesión…" : "Cerrar sesión"}
+          {isLoggingOut ? "Cerrando sesión…" : "Cerrar sesión"}
         </button>
       </div>
     </div>

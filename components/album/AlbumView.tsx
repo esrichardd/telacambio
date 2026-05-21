@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo, useTransition } from "react";
+import { useState, useCallback, useMemo, useTransition, useEffect } from "react";
 import type { Album, Sticker } from "@/types/app";
 import { createClient } from "@/lib/supabase/client";
 import { upsertSticker, removeSticker } from "@/lib/db/collection-stickers";
@@ -89,7 +89,24 @@ export default function AlbumView({
   const [flashId, setFlashId] = useState<string | null>(null);
   const [sectionSearch, setSectionSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const [showScrollTop, setShowScrollTop] = useState(false);
   const [, startTransition] = useTransition();
+
+  // Detecta scroll en el <main> del layout para mostrar el botón de subir
+  useEffect(() => {
+    const main = document.querySelector("main");
+    if (!main) return;
+    const onScroll = () => setShowScrollTop(main.scrollTop > 380);
+    main.addEventListener("scroll", onScroll, { passive: true });
+    return () => main.removeEventListener("scroll", onScroll);
+  }, []);
+
+  function scrollToTop() {
+    document.querySelector("main")?.scrollTo({ top: 0, behavior: "smooth" });
+  }
 
   // ── Secciones en orden del álbum: FWC primero → selecciones → CC al final ─
   const allSections = useMemo(() => {
@@ -104,6 +121,28 @@ export default function AlbumView({
     const cc = keys.has("CC") ? ["CC"] : [];
     return [...fwcKeys, ...middle, ...extra, ...cc];
   }, [expandedGroups]);
+
+  // ── Colapso global de secciones ───────────────────────────────────────────
+  const allCollapsed =
+    allSections.length > 0 &&
+    allSections.every((s) => collapsedSections.has(s));
+
+  function toggleSection(key: string) {
+    setCollapsedSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
+
+  function handleToggleCollapse() {
+    if (allCollapsed) {
+      setCollapsedSections(new Set());
+    } else {
+      setCollapsedSections(new Set(allSections));
+    }
+  }
 
   // ── Sync helpers (solo usados en modo escritura) ──────────────────────────
   async function syncUpsert(stickerId: string, quantity: number) {
@@ -296,7 +335,7 @@ export default function AlbumView({
   );
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background">
       <div
         aria-hidden
         className="pointer-events-none fixed inset-0 z-0"
@@ -307,7 +346,7 @@ export default function AlbumView({
       />
 
       {/* ── Cabecera no-sticky ───────────────────────────────────────────── */}
-      <div className="max-w-2xl mx-auto px-4 pt-20 pb-4">
+      <div className="max-w-2xl mx-auto px-4 pt-6 pb-4">
         {readOnly ? (
           <>
             <h2 className="text-xl font-bold text-foreground">Álbum</h2>
@@ -322,9 +361,13 @@ export default function AlbumView({
       </div>
 
       {/* ── Sticky — filtros + buscador + hint ───────────────────────────── */}
-      <div className="sticky top-14 z-20 bg-background/95 backdrop-blur border-b border-border">
+      <div className="sticky top-0 z-20 bg-background/95 backdrop-blur border-b border-border">
         <div className="max-w-2xl mx-auto px-4 pt-3 pb-1">
-          <AlbumFilters active={filter} onChange={setFilter} counts={counts} />
+          <AlbumFilters
+            active={filter}
+            onChange={setFilter}
+            counts={counts}
+          />
         </div>
 
         {/* Buscador de secciones */}
@@ -392,7 +435,7 @@ export default function AlbumView({
       </div>
 
       {/* ── Contenido ─────────────────────────────────────────────────────── */}
-      <div className="relative z-10 max-w-2xl mx-auto px-4 pb-28">
+      <div className="relative z-10 max-w-2xl mx-auto px-4 pb-10">
         {/* Tarjeta de stats */}
         <StatsCard
           albumName={album.name}
@@ -403,6 +446,40 @@ export default function AlbumView({
           specialStickersCount={specialStickers.length}
           totalStickers={allStickers.length}
         />
+
+        {/* Control contraer / expandir — entre stats y secciones */}
+        <div className="flex justify-end mb-2 -mt-4">
+          <button
+            type="button"
+            onClick={handleToggleCollapse}
+            className="flex items-center gap-1.5 text-[11px] text-muted hover:text-foreground transition-colors"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              {allCollapsed ? (
+                <>
+                  <path d="m7 15 5 5 5-5" />
+                  <path d="m7 9 5-5 5 5" />
+                </>
+              ) : (
+                <>
+                  <path d="m7 20 5-5 5 5" />
+                  <path d="m7 4 5 5 5-5" />
+                </>
+              )}
+            </svg>
+            {allCollapsed ? "Expandir todo" : "Contraer todo"}
+          </button>
+        </div>
 
         {/* Secciones de barajitas */}
         <div
@@ -419,6 +496,8 @@ export default function AlbumView({
                 ownedMap={ownedMap}
                 flashId={flashId}
                 isSpecialFn={isSpecialSticker}
+                collapsed={collapsedSections.has(section)}
+                onToggle={() => toggleSection(section)}
                 onTileAdd={handleTileAdd}
                 onTileRemove={handleTileRemove}
               />
@@ -437,6 +516,37 @@ export default function AlbumView({
           )}
         </div>
       </div>
+
+      {/* ── Botón scroll-to-top — slide up/down según scroll ────────────────── */}
+      <button
+        type="button"
+        onClick={scrollToTop}
+        className={`fixed bottom-20 left-4 z-30
+          w-10 h-10 rounded-full
+          bg-surface border border-border text-muted
+          hover:text-foreground hover:border-border/60
+          shadow-lg shadow-black/20
+          active:scale-95
+          flex items-center justify-center
+          transition-all duration-300 ease-out
+          ${showScrollTop ? "translate-y-0 opacity-100" : "translate-y-16 opacity-0 pointer-events-none"}`}
+        aria-label="Ir al inicio"
+        aria-hidden={!showScrollTop}
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="m18 15-6-6-6 6" />
+        </svg>
+      </button>
 
       {/* ── FAB — solo en modo escritura ──────────────────────────────────── */}
       {!readOnly && (

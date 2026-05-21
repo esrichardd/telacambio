@@ -13,10 +13,12 @@ export default async function AppLayout({
   await getCurrentProfile();
 
   return (
-    <>
+    <div className="flex flex-col h-dvh">
       <AppHeader />
-      {children}
+      <main className="flex-1 overflow-y-auto">
+        {children}
+      </main>
       <BottomNav />
-    </>
+    </div>
   );
 }

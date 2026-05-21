@@ -16,7 +16,7 @@ type Props = { skeleton: true } | { skeleton?: false; stats: CollectionStats };
 // established for future additions).
 function EstadisticasSkeleton() {
   return (
-    <div className="flex flex-col gap-3 px-4 pb-24 pt-20">
+    <div className="flex flex-col gap-3 px-4 pb-10 pt-6">
       <StatsHero skeleton />
       <TradableCard skeleton />
       <SpecialsCard skeleton />
@@ -33,7 +33,7 @@ export default function EstadisticasView(props: Props) {
   const { stats } = props;
 
   return (
-    <div className="flex flex-col gap-3 px-4 pb-24 pt-20">
+    <div className="flex flex-col gap-3 px-4 pb-10 pt-6">
       <StatsHero
         percentage={stats.percentage}
         owned={stats.owned}

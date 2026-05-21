@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import type { Sticker } from "@/types/app";
 import { SECTION_META } from "@/lib/constants/section-names";
 import StickerTile from "./StickerTile";
@@ -21,6 +20,8 @@ type StickerSectionProps =
       ownedMap: Map<string, number>;
       flashId: string | null;
       isSpecialFn: (sticker: Sticker) => boolean;
+      collapsed: boolean;
+      onToggle: () => void;
       onTileAdd: (sticker: Sticker) => void;
       onTileRemove: (sticker: Sticker) => void;
     };
@@ -59,12 +60,11 @@ export default function StickerSection(props: StickerSectionProps) {
     ownedMap,
     flashId,
     isSpecialFn,
+    collapsed,
+    onToggle,
     onTileAdd,
     onTileRemove,
   } = props;
-
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const [collapsed, setCollapsed] = useState(false);
 
   const meta = SECTION_META[section];
   const flag = meta?.flag ?? "🏳️";
@@ -79,7 +79,7 @@ export default function StickerSection(props: StickerSectionProps) {
       {/* Header de sección — clickeable para colapsar */}
       <button
         type="button"
-        onClick={() => setCollapsed((c) => !c)}
+        onClick={onToggle}
         className="flex items-center justify-between w-full text-left group"
       >
         <div className="flex items-center gap-2 min-w-0">

@@ -14,7 +14,7 @@ export default async function DashboardPage() {
   const { profile } = await getCurrentProfile();
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background">
       {/* Glow de fondo sutil */}
       <div
         aria-hidden
@@ -25,7 +25,7 @@ export default async function DashboardPage() {
         }}
       />
 
-      <div className="relative z-10 max-w-2xl mx-auto px-4 pt-20 pb-28">
+      <div className="relative z-10 max-w-2xl mx-auto px-4 pt-6 pb-10">
         {/* Header con avatar y nombre */}
         <DashboardHeader profile={profile} />
 

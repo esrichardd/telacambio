@@ -148,7 +148,7 @@ export default function BottomNav({ pendingTradesCount = 0 }: BottomNavProps) {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-surface/95 backdrop-blur border-t border-border">
+    <nav className="shrink-0 bg-surface/95 backdrop-blur border-t border-border" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
       <div className="max-w-2xl mx-auto flex items-stretch">
         {NAV_ITEMS.map((item) => {
           const active = pathname === item.href;
@@ -178,8 +178,6 @@ export default function BottomNav({ pendingTradesCount = 0 }: BottomNavProps) {
           );
         })}
       </div>
-      {/* Safe area para dispositivos con home indicator */}
-      <div className="h-safe-area-inset-bottom bg-surface/95" />
     </nav>
   );
 }

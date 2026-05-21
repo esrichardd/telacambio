@@ -3,7 +3,7 @@ import StickerSection from "./StickerSection";
 
 export default function AlbumSkeleton() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background">
       {/* Glow de fondo */}
       <div
         aria-hidden
@@ -15,13 +15,13 @@ export default function AlbumSkeleton() {
       />
 
       {/* Header */}
-      <div className="max-w-2xl mx-auto px-4 pt-20 pb-4">
+      <div className="max-w-2xl mx-auto px-4 pt-6 pb-4">
         <h1 className="text-2xl font-bold text-foreground">Mi álbum</h1>
         <div className="h-4 w-36 rounded bg-surface-subtle animate-pulse mt-1.5" />
       </div>
 
       {/* Sticky bar */}
-      <div className="sticky top-14 z-20 bg-background/95 backdrop-blur border-b border-border">
+      <div className="sticky top-0 z-20 bg-background/95 backdrop-blur border-b border-border">
         {/* Filtros */}
         <div className="max-w-2xl mx-auto px-4 pt-3 pb-1">
           <div className="flex gap-1.5 overflow-x-auto pb-0.5 no-scrollbar">
@@ -46,7 +46,7 @@ export default function AlbumSkeleton() {
       </div>
 
       {/* Contenido */}
-      <div className="relative z-10 max-w-2xl mx-auto px-4 pb-28">
+      <div className="relative z-10 max-w-2xl mx-auto px-4 pb-10">
         <StatsCard skeleton />
 
         <div className="flex flex-col gap-8">

@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function AppHeader() {
   return (
-    <header className="fixed top-0 left-0 right-0 z-30 h-14 bg-background/95 backdrop-blur border-b border-border flex items-center">
+    <header className="shrink-0 h-14 bg-background/95 backdrop-blur border-b border-border flex items-center">
       <div className="max-w-2xl mx-auto w-full px-4 flex items-center justify-between">
         {/* Marca */}
         <Link href="/dashboard" className="flex items-center gap-2">

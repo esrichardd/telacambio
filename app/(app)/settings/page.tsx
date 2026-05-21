@@ -12,7 +12,7 @@ export default async function SettingsPage() {
   const { user, profile } = await getCurrentProfile();
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background">
       <div
         aria-hidden
         className="pointer-events-none fixed inset-0 z-0"
@@ -22,7 +22,7 @@ export default async function SettingsPage() {
         }}
       />
 
-      <div className="relative z-10 max-w-2xl mx-auto px-4 pt-20 pb-28">
+      <div className="relative z-10 max-w-2xl mx-auto px-4 pt-6 pb-10">
         <ProfileSettingsForm
           profile={profile}
           userId={user.id}

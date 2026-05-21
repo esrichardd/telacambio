@@ -14,7 +14,7 @@ export default async function IntercambiosPage() {
 
   return (
     <>
-      <main className="pt-16 pb-24 min-h-screen">
+      <main className="pt-4 pb-10">
         <div className="max-w-2xl mx-auto px-4">
           <TradeHeader />
           <div className="flex flex-col gap-4 mt-4">
